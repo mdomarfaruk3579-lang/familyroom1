@@ -1,0 +1,130 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Family Member",
+      "description": "A member of the family tree.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Full name of the member"
+        },
+        "role": {
+          "type": "string",
+          "description": "Relationship or role (e.g., দাদা, দাদি, ছেলে ১, মেয়ে)"
+        },
+        "birthYear": {
+          "type": "string",
+          "description": "Year of birth"
+        },
+        "dob": {
+          "type": "string",
+          "description": "Date of birth in DD/MM/YYYY format"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address"
+        },
+        "socialLinks": {
+          "type": "object",
+          "description": "Social media links"
+        },
+        "timeline": {
+          "type": "array",
+          "description": "Timeline events"
+        },
+        "bio": {
+          "type": "string",
+          "description": "Short biography or info"
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL of the profile photo"
+        },
+        "gallery": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of photo URLs for the gallery"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["grandpa", "grandma", "son", "daughter", "spouse", "grandchild", "great-grandchild"],
+          "description": "Type of node in the tree"
+        },
+        "parentId": {
+          "type": "string",
+          "description": "ID of the parent (for grandchildren)"
+        },
+        "order": {
+          "type": "number",
+          "description": "Order for sorting siblings"
+        }
+      },
+      "required": ["name", "role", "type", "order"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user of the application (Admin).",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "user"]
+        }
+      },
+      "required": ["email", "role"]
+    },
+    "AboutPost": {
+      "title": "About Post",
+      "description": "A blog post for the About Us page.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "photoUrl": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "number"
+        },
+        "order": {
+          "type": "number"
+        }
+      },
+      "required": ["title", "content", "createdAt", "order"]
+    }
+  },
+  "firestore": {
+    "/members/{memberId}": {
+      "schema": {
+        "$ref": "Member"
+      },
+      "description": "Stores family members."
+    },
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "User"
+      },
+      "description": "Stores user roles (e.g., admin)."
+    },
+    "/about_posts/{postId}": {
+      "schema": {
+        "$ref": "AboutPost"
+      },
+      "description": "Stores blog posts for the About Us page."
+    }
+  }
+}

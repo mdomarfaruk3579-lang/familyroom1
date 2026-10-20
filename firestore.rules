@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() &&
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "mdomarfaruk3579@gmail.com" && request.auth.token.email_verified == true));
+    }
+    
+    function isValidMember(data) {
+      let allowedFields = ['name', 'nameEn', 'role', 'type', 'order', 'birthYear', 'deathYear', 'bio', 'photoUrl', 'parentId', 'spouseId', 'gender', 'gallery', 'createdAt', 'dob', 'phone', 'email', 'socialLinks', 'timeline', 'timelineEnded'];
+      return data.keys().hasOnly(allowedFields) &&
+             data.keys().hasAll(['name', 'role', 'type', 'order']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             (!('nameEn' in data) || (data.nameEn is string && data.nameEn.size() <= 120)) &&
+             data.role is string && data.role.size() > 0 && data.role.size() < 50 &&
+             data.type in ['grandpa', 'grandma', 'son', 'daughter', 'spouse', 'grandchild', 'great-grandchild', 'great-great-grandchild'] &&
+             data.order is number &&
+             (!('birthYear' in data) || (data.birthYear is string && data.birthYear.size() <= 20)) &&
+             (!('deathYear' in data) || (data.deathYear is string && data.deathYear.size() <= 20)) &&
+             (!('dob' in data) || (data.dob is string && data.dob.size() <= 30)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 50)) &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
+             (!('socialLinks' in data) || (data.socialLinks is map)) &&
+             (!('timeline' in data) || (data.timeline is list && data.timeline.size() <= 50)) &&
+             (!('timelineEnded' in data) || data.timelineEnded is bool) &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 10000)) &&
+             (!('photoUrl' in data) || (data.photoUrl is string && data.photoUrl.size() <= 1048576)) &&
+             (!('parentId' in data) || data.parentId == null || (data.parentId is string && data.parentId.size() <= 100)) &&
+             (!('spouseId' in data) || data.spouseId == null || (data.spouseId is string && data.spouseId.size() <= 100)) &&
+             (!('gender' in data) || (data.gender is string && data.gender in ['male', 'female'])) &&
+             (!('gallery' in data) || (data.gallery is list && data.gallery.size() <= 50)) &&
+             (!('createdAt' in data) || data.createdAt is number);
+    }
+
+    function isValidAboutPost(data) {
+      let allowedFields = ['title', 'content', 'photoUrl', 'createdAt', 'order'];
+      return data.keys().hasOnly(allowedFields) &&
+             data.keys().hasAll(['title', 'content', 'createdAt', 'order']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 10000 &&
+             (!('photoUrl' in data) || data.photoUrl == null || (data.photoUrl is string && data.photoUrl.size() <= 1048576)) &&
+             data.createdAt is number &&
+             data.order is number;
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create, update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if isAdmin();
+    }
+
+    match /members/{memberId} {
+      // Anyone can read the family tree
+      allow read: if true;
+      allow create: if isAdmin() && isValidMember(request.resource.data);
+      allow update: if isAdmin() && isValidMember(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /about_posts/{postId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidAboutPost(request.resource.data);
+      allow update: if isAdmin() && isValidAboutPost(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    function isValidGalleryImage(data) {
+      let allowedFields = ['url', 'createdAt'];
+      return data.keys().hasOnly(allowedFields) &&
+             data.keys().hasAll(['url', 'createdAt']) &&
+             data.url is string && data.url.size() > 0 && data.url.size() <= 1048576 &&
+             data.createdAt is number;
+    }
+
+    match /gallery/{imageId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidGalleryImage(request.resource.data);
+      allow update: if isAdmin() && isValidGalleryImage(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

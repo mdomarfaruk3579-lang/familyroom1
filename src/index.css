@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Hind Siliguri', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Noto Serif Bengali', 'Cormorant Garamond', 'Playfair Display', 'Cinzel', ui-serif, Georgia, serif;
+}
+
+.font-signature {
+  font-family: 'Great Vibes', cursive !important;
+}
+
+.font-cormorant {
+  font-family: 'Cormorant Garamond', 'Playfair Display', serif !important;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif !important;
+}
+
+body.font-en {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  letter-spacing: -0.01em;
+}
+
+body.font-en .font-serif {
+  font-family: 'Cormorant Garamond', 'Playfair Display', 'Cinzel', Georgia, serif !important;
+}
+
+body.font-bn {
+  font-family: 'Hind Siliguri', sans-serif !important;
+}
+
+body.font-bn .font-serif {
+  font-family: 'Noto Serif Bengali', Georgia, serif !important;
+}
+
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+html, body {
+  /* Hide scrollbar */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  font-family: 'Hind Siliguri', sans-serif;
+  background-color: #FAF9F6; /* Light Cream */
+  color: #2b2b2b; /* Dark text for readability */
+  max-width: 100%;
+  
+  /* Family Room Background Design - Optimized for Performance */
+  background-image: 
+    /* Soft Green (#2E7D61) subtle accent */
+    radial-gradient(circle at 10% 90%, rgba(46, 125, 97, 0.04) 0%, transparent 40%),
+    /* Soft Gold (#D4A373) subtle highlight */
+    radial-gradient(circle at 90% 10%, rgba(212, 163, 115, 0.06) 0%, transparent 40%),
+    /* Subtle paper texture */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+  
+  /* Removed background-attachment: fixed because it causes massive scroll lag on mobile */
+  background-size: 100% 100%, 100% 100%, 150px 150px;
+}
