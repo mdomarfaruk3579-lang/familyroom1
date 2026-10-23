@@ -13,6 +13,13 @@ export interface Member {
   birthYear?: string;
   deathYear?: string;
   dob?: string; // dd/mm/yyyy
+  currentlyLiveIn?: string; // country name, defaults to 'Bangladesh'
+  maritalStatus?: string; // e.g. 'বিবাহিত', 'অবিবাহিত', etc.
+  isDeceased?: boolean; // মৃত / মরহুম
+  fatherId?: string | null;
+  fatherName?: string;
+  motherId?: string | null;
+  motherName?: string;
   phone?: string;
   email?: string;
   socialLinks?: {
@@ -54,4 +61,21 @@ export interface GalleryImage {
   url: string;
   caption?: string;
   createdAt: number;
+}
+
+export interface DeveloperProfile {
+  name: string;
+  title: string;
+  bio: string;
+  photoUrl?: string;
+  phone?: string;
+  email?: string;
+  socialLinks?: {
+    facebook?: string;
+    whatsapp?: string;
+    github?: string;
+    linkedin?: string;
+    website?: string;
+  };
+  updatedAt?: number;
 }

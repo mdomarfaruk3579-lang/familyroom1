@@ -3,9 +3,10 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Member } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, User, Baby, Heart, Activity, ArrowLeft, ChevronDown, ChevronUp, X, Calculator } from 'lucide-react';
+import { Users, User, Baby, Heart, Activity, ArrowLeft, ChevronDown, ChevronUp, X, Calculator, Globe, Plane } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../LanguageContext';
+import { isProbashi, getCountryDisplay } from '../data/countries';
 
 export default function Statistics() {
   const navigate = useNavigate();
@@ -13,14 +14,44 @@ export default function Statistics() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedFamilyId, setExpandedFamilyId] = useState<string | null>(null);
-  const [selectedStatCategory, setSelectedStatCategory] = useState<{ title: string, members: Member[] } | null>(null);
+  const [selectedStatCategory, setSelectedStatCategory] = useState<{ title: string, count: number, members: Member[], isProbashi?: boolean } | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'members'), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
-      setMembers(data);
-      setLoading(false);
-    });
+    // Initial load from cache
+    try {
+      const cached = localStorage.getItem('family_members_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMembers(parsed);
+          setLoading(false);
+        }
+      }
+    } catch {}
+
+    const unsubscribe = onSnapshot(
+      collection(db, 'members'),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
+          setMembers(data);
+          try {
+            localStorage.setItem('family_members_cache', JSON.stringify(data));
+          } catch {}
+        }
+        setLoading(false);
+      },
+      () => {
+        // Handle quota limit or offline gracefully
+        try {
+          const cached = localStorage.getItem('family_members_cache');
+          if (cached) {
+            setMembers(JSON.parse(cached));
+          }
+        } catch {}
+        setLoading(false);
+      }
+    );
     return () => unsubscribe();
   }, []);
 
@@ -28,18 +59,21 @@ export default function Statistics() {
   const grandmas = useMemo(() => members.filter(m => m.type === 'head' || m.type === 'grandma'), [members]);
   const sons = useMemo(() => members.filter(m => m.type === 'son'), [members]);
   const daughters = useMemo(() => members.filter(m => m.type === 'daughter'), [members]);
+  const probashiMembers = useMemo(() => members.filter(m => isProbashi(m.currentlyLiveIn)), [members]);
+  const deshiMembers = useMemo(() => members.filter(m => !isProbashi(m.currentlyLiveIn)), [members]);
 
   const stats = useMemo(() => [
-    { title: lang === 'bn' ? 'মোট সদস্য' : 'Total Members', count: members.length, icon: Users, color: 'text-blue-600', members: members },
-    { title: lang === 'bn' ? 'দাদা-দাদি' : 'Grandparents', count: grandpas.length + grandmas.length, icon: User, color: 'text-indigo-600', members: [...grandpas, ...grandmas] },
-    { title: lang === 'bn' ? 'ছেলে' : 'Sons', count: sons.length, icon: User, color: 'text-blue-500', members: sons },
-    { title: lang === 'bn' ? 'মেয়ে' : 'Daughters', count: daughters.length, icon: User, color: 'text-pink-500', members: daughters },
-    { title: lang === 'bn' ? 'স্ত্রী/স্বামী' : 'Spouses', count: members.filter(m => m.type === 'spouse').length, icon: Heart, color: 'text-red-500', members: members.filter(m => m.type === 'spouse') },
-    { title: lang === 'bn' ? 'নাতি-নাতনি' : 'Grandchildren', count: members.filter(m => m.type === 'grandchild').length, icon: Baby, color: 'text-green-500', members: members.filter(m => m.type === 'grandchild') },
-    { title: lang === 'bn' ? 'নাতি-নাতনির সন্তান' : 'Great-Grandchildren', count: members.filter(m => m.type === 'great-grandchild' || m.type === 'great-great-grandchild').length, icon: Baby, color: 'text-teal-500', members: members.filter(m => m.type === 'great-grandchild' || m.type === 'great-great-grandchild') },
-    { title: lang === 'bn' ? 'পুরুষ' : 'Male', count: members.filter(m => m.gender === 'male').length, icon: User, color: 'text-sky-600', members: members.filter(m => m.gender === 'male') },
-    { title: lang === 'bn' ? 'মহিলা' : 'Female', count: members.filter(m => m.gender === 'female').length, icon: User, color: 'text-rose-500', members: members.filter(m => m.gender === 'female') }
-  ], [members, grandpas, grandmas, sons, daughters, lang]);
+    { title: lang === 'bn' ? 'মোট সদস্য' : 'Total Members', count: members.length, icon: Users, color: 'text-blue-600', members: members, isProbashi: false },
+    { title: lang === 'bn' ? 'দাদা-দাদি' : 'Grandparents', count: grandpas.length + grandmas.length, icon: User, color: 'text-indigo-600', members: [...grandpas, ...grandmas], isProbashi: false },
+    { title: lang === 'bn' ? 'ছেলে' : 'Sons', count: sons.length, icon: User, color: 'text-blue-500', members: sons, isProbashi: false },
+    { title: lang === 'bn' ? 'মেয়ে' : 'Daughters', count: daughters.length, icon: User, color: 'text-pink-500', members: daughters, isProbashi: false },
+    { title: lang === 'bn' ? 'প্রবাসী' : 'Living Abroad', count: probashiMembers.length, icon: Globe, color: 'text-emerald-600', members: probashiMembers, isProbashi: true },
+    { title: lang === 'bn' ? 'স্ত্রী/স্বামী' : 'Spouses', count: members.filter(m => m.type === 'spouse').length, icon: Heart, color: 'text-red-500', members: members.filter(m => m.type === 'spouse'), isProbashi: false },
+    { title: lang === 'bn' ? 'নাতি-নাতনি' : 'Grandchildren', count: members.filter(m => m.type === 'grandchild').length, icon: Baby, color: 'text-green-500', members: members.filter(m => m.type === 'grandchild'), isProbashi: false },
+    { title: lang === 'bn' ? 'নাতি-নাতনির সন্তান' : 'Great-Grandchildren', count: members.filter(m => m.type === 'great-grandchild' || m.type === 'great-great-grandchild').length, icon: Baby, color: 'text-teal-500', members: members.filter(m => m.type === 'great-grandchild' || m.type === 'great-great-grandchild'), isProbashi: false },
+    { title: lang === 'bn' ? 'পুরুষ' : 'Male', count: members.filter(m => m.gender === 'male').length, icon: User, color: 'text-sky-600', members: members.filter(m => m.gender === 'male'), isProbashi: false },
+    { title: lang === 'bn' ? 'মহিলা' : 'Female', count: members.filter(m => m.gender === 'female').length, icon: User, color: 'text-rose-500', members: members.filter(m => m.gender === 'female'), isProbashi: false }
+  ], [members, grandpas, grandmas, sons, daughters, probashiMembers, lang]);
 
   const getFamilyMembers = useMemo(() => (rootId: string) => {
     const familyIds = new Set<string>();
@@ -95,9 +129,18 @@ export default function Statistics() {
       animate={{ opacity: 1, y: 0 }}
       className="max-w-6xl mx-auto py-8 px-4"
     >
-      <Link to="/" className="inline-flex items-center gap-2 text-[#1A3636] hover:text-[#C19A6B] mb-6 font-medium transition-colors">
-        <ArrowLeft className="w-5 h-5" /> ফ্যামিলি ট্রিতে ফিরে যান
-      </Link>
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+        <Link to="/" className="inline-flex items-center gap-2 text-[#1A3636] hover:text-[#C19A6B] font-medium transition-colors">
+          <ArrowLeft className="w-5 h-5" /> ফ্যামিলি ট্রিতে ফিরে যান
+        </Link>
+        <Link 
+          to="/islamic" 
+          className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#0d342a] via-[#13493b] to-[#0c3127] text-amber-200 border border-amber-400/50 hover:border-amber-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all text-xs sm:text-sm font-semibold group"
+        >
+          <span className="text-base group-hover:rotate-12 transition-transform">🌙</span>
+          <span className="tracking-wide">ফ্যামিলি ইসলামিক</span>
+        </Link>
+      </div>
 
       <div className="text-center mb-12">
         <motion.h1 
@@ -266,33 +309,66 @@ export default function Statistics() {
                 </button>
               </div>
 
+              {/* Probashi Statistics Header Banner */}
+              {(selectedStatCategory.isProbashi || selectedStatCategory.title === 'প্রবাসী') && (
+                <div className="bg-gradient-to-r from-emerald-900 via-[#1A3636] to-teal-950 p-4 sm:p-5 border-b border-emerald-500/30 text-white">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+                        <Globe className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-emerald-300 font-semibold">পারিবারিক ভৌগোলিক বিস্তার</span>
+                        <h4 className="text-sm sm:text-base font-bold text-white">
+                          🇧🇩 বর্তমানে দেশে আছেন: <span className="text-amber-300 font-mono text-base sm:text-lg">{deshiMembers.length}</span> জন
+                        </h4>
+                      </div>
+                    </div>
+                    <div className="px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm text-xs sm:text-sm font-bold text-amber-200">
+                      ✈️ বর্তমানে প্রবাসে আছেন: <span className="font-mono text-base text-white">{probashiMembers.length}</span> জন
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="p-6 overflow-y-auto">
                 {selectedStatCategory.members.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {selectedStatCategory.members.map(m => (
-                      <div 
-                        key={m.id} 
-                        onClick={() => navigate(`/member/${m.id}`)}
-                        className="bg-white p-4 rounded-2xl border border-[#EAE6DF] flex flex-col items-center text-center cursor-pointer hover:border-[#C19A6B] hover:shadow-md transition-all group"
-                      >
-                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#EAE6DF] group-hover:border-[#C19A6B] transition-colors mb-3">
-                          <img 
-                            src={m.photoUrl || (m.gender === 'female' ? "https://api.dicebear.com/7.x/notionists/svg?seed=female&backgroundColor=f0e6d2" : "https://api.dicebear.com/7.x/notionists/svg?seed=male&backgroundColor=f0e6d2")} 
-                            alt={m.name} 
-                            className="w-full h-full object-cover"
-                            referrerPolicy="no-referrer"
-                          />
+                    {selectedStatCategory.members.map(m => {
+                      const country = getCountryDisplay(m.currentlyLiveIn);
+                      return (
+                        <div 
+                          key={m.id} 
+                          onClick={() => navigate(`/member/${m.id}`)}
+                          className="bg-white p-4 rounded-2xl border border-[#EAE6DF] flex flex-col items-center text-center cursor-pointer hover:border-[#C19A6B] hover:shadow-md transition-all group"
+                        >
+                          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#EAE6DF] group-hover:border-[#C19A6B] transition-colors mb-3">
+                            <img 
+                              src={m.photoUrl || (m.gender === 'female' ? "https://api.dicebear.com/7.x/notionists/svg?seed=female&backgroundColor=f0e6d2" : "https://api.dicebear.com/7.x/notionists/svg?seed=male&backgroundColor=f0e6d2")} 
+                              alt={m.name} 
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                          <h3 className="font-bold text-[#1A3636] text-sm mb-1">{m.name}</h3>
+                          <div className="flex flex-col gap-1 items-center">
+                            <span className="text-[10px] bg-[#EAE6DF] text-[#736B65] px-2 py-0.5 rounded-full">
+                              {m.type === 'head' || m.type === 'grandpa' || m.type === 'grandma' ? 'দাদা-দাদি' : 
+                               m.type === 'son' ? 'ছেলে' : 
+                               m.type === 'daughter' ? 'মেয়ে' : 
+                               m.type === 'spouse' ? 'স্ত্রী/স্বামী' : 
+                               m.type === 'grandchild' ? 'নাতি/নাতনি' : 'পরবর্তী প্রজন্ম'}
+                            </span>
+                            {m.currentlyLiveIn && (
+                              <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                                <span>{country.flag}</span>
+                                <span>{country.name}</span>
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <h3 className="font-bold text-[#1A3636] text-sm mb-1">{m.name}</h3>
-                        <span className="text-[10px] bg-[#EAE6DF] text-[#736B65] px-2 py-0.5 rounded-full">
-                          {m.type === 'head' || m.type === 'grandpa' || m.type === 'grandma' ? 'দাদা-দাদি' : 
-                           m.type === 'son' ? 'ছেলে' : 
-                           m.type === 'daughter' ? 'মেয়ে' : 
-                           m.type === 'spouse' ? 'স্ত্রী/স্বামী' : 
-                           m.type === 'grandchild' ? 'নাতি/নাতনি' : 'পরবর্তী প্রজন্ম'}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-10 text-[#736B65]">

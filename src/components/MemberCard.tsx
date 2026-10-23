@@ -68,8 +68,13 @@ const MemberCard = memo(function MemberCard({ member, onClick, onInfoClick, isAc
       <h3 className="font-serif font-bold text-[10px] sm:text-xs md:text-sm text-center truncate w-full px-1">
         {member.name || translateRole(member.role)}
       </h3>
-      <p className={`text-[8px] sm:text-[10px] md:text-xs mt-0.5 ${isActive ? 'text-[#EAE6DF]' : 'text-[#C19A6B]'} font-medium tracking-wide`}>
-        {translateRole(member.role)}
+      <p className={`text-[8px] sm:text-[10px] md:text-xs mt-0.5 ${isActive ? 'text-[#EAE6DF]' : 'text-[#C19A6B]'} font-medium tracking-wide flex items-center justify-center gap-1`}>
+        <span>{translateRole(member.role)}</span>
+        {(member.isDeceased || member.deathYear) && (
+          <span className={`text-[7px] sm:text-[8px] px-1 rounded-sm font-sans ${isActive ? 'bg-stone-700 text-stone-200' : 'bg-stone-200/90 text-stone-700'}`}>
+            {member.gender === 'female' ? 'মরহুমা' : 'মরহুম'}
+          </span>
+        )}
       </p>
     </motion.div>
   );

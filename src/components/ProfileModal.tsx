@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Member } from '../types';
-import { X, Calendar, Info, Image as ImageIcon, Cake, Phone, Mail, Globe, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Calendar, Info, Image as ImageIcon, Cake, Phone, Mail, Globe, Sparkles, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import { getCountryDisplay } from '../data/countries';
 
 interface ProfileModalProps {
   member: Member | null;
@@ -13,6 +14,8 @@ export default function ProfileModal({ member, onClose }: ProfileModalProps) {
   const { t, lang, translateRole } = useLanguage();
   const [isBioExpanded, setIsBioExpanded] = useState(false);
   if (!member) return null;
+
+  const countryInfo = getCountryDisplay(member.currentlyLiveIn);
 
   const seed = encodeURIComponent(member.name || member.role || 'family');
   const avatarStyle = member.gender === 'female' ? 'lorelei' : 'micah';
@@ -59,15 +62,22 @@ export default function ProfileModal({ member, onClose }: ProfileModalProps) {
                 </div>
                 
                 {/* Dates & Core Info */}
-                <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-3 text-xs text-stone-600 justify-center sm:justify-start">
+                <div className="flex flex-col gap-1.5 mb-3 text-xs text-stone-600 items-center sm:items-start">
                   {member.dob && (
                     <div className="flex items-center gap-1.5 font-medium text-stone-800">
                       <Cake className="w-3.5 h-3.5 text-amber-600" />
                       <span>{t('dob')}: <strong className="font-mono text-amber-700">{member.dob}</strong></span>
                     </div>
                   )}
+
+                  {/* currently live in - directly below Date of Birth */}
+                  <div className="flex items-center gap-1.5 font-medium text-emerald-900 bg-emerald-50/80 border border-emerald-200/80 px-2.5 py-1 rounded-full text-xs w-fit">
+                    <span className="text-sm">{countryInfo.flag}</span>
+                    <span>currently live in - <strong>{countryInfo.name}</strong></span>
+                  </div>
+
                   {member.deathYear && (
-                    <div className="flex items-center gap-1.5 text-stone-500">
+                    <div className="flex items-center gap-1.5 text-stone-500 pt-0.5">
                       <Calendar className="w-3.5 h-3.5 text-stone-400" />
                       <span>{t('died')}: {member.deathYear}</span>
                     </div>

@@ -14,7 +14,7 @@ service cloud.firestore {
     }
     
     function isValidMember(data) {
-      let allowedFields = ['name', 'nameEn', 'role', 'type', 'order', 'birthYear', 'deathYear', 'bio', 'photoUrl', 'parentId', 'spouseId', 'gender', 'gallery', 'createdAt', 'dob', 'phone', 'email', 'socialLinks', 'timeline', 'timelineEnded'];
+      let allowedFields = ['name', 'nameEn', 'role', 'type', 'order', 'birthYear', 'deathYear', 'bio', 'photoUrl', 'parentId', 'spouseId', 'gender', 'gallery', 'createdAt', 'dob', 'phone', 'email', 'socialLinks', 'timeline', 'timelineEnded', 'currentlyLiveIn', 'maritalStatus', 'fatherId', 'fatherName', 'motherId', 'motherName', 'isDeceased'];
       return data.keys().hasOnly(allowedFields) &&
              data.keys().hasAll(['name', 'role', 'type', 'order']) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
@@ -24,7 +24,14 @@ service cloud.firestore {
              data.order is number &&
              (!('birthYear' in data) || (data.birthYear is string && data.birthYear.size() <= 20)) &&
              (!('deathYear' in data) || (data.deathYear is string && data.deathYear.size() <= 20)) &&
+             (!('isDeceased' in data) || data.isDeceased is bool) &&
              (!('dob' in data) || (data.dob is string && data.dob.size() <= 30)) &&
+             (!('currentlyLiveIn' in data) || (data.currentlyLiveIn is string && data.currentlyLiveIn.size() <= 100)) &&
+             (!('maritalStatus' in data) || (data.maritalStatus is string && data.maritalStatus.size() <= 50)) &&
+             (!('fatherId' in data) || data.fatherId == null || (data.fatherId is string && data.fatherId.size() <= 100)) &&
+             (!('fatherName' in data) || (data.fatherName is string && data.fatherName.size() <= 120)) &&
+             (!('motherId' in data) || data.motherId == null || (data.motherId is string && data.motherId.size() <= 100)) &&
+             (!('motherName' in data) || (data.motherName is string && data.motherName.size() <= 120)) &&
              (!('phone' in data) || (data.phone is string && data.phone.size() <= 50)) &&
              (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
              (!('socialLinks' in data) || (data.socialLinks is map)) &&
@@ -44,10 +51,32 @@ service cloud.firestore {
       return data.keys().hasOnly(allowedFields) &&
              data.keys().hasAll(['title', 'content', 'createdAt', 'order']) &&
              data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-             data.content is string && data.content.size() > 0 && data.content.size() < 10000 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 20000 &&
              (!('photoUrl' in data) || data.photoUrl == null || (data.photoUrl is string && data.photoUrl.size() <= 1048576)) &&
              data.createdAt is number &&
              data.order is number;
+    }
+
+    function isValidDeveloperProfile(data) {
+      let allowedFields = ['name', 'title', 'bio', 'photoUrl', 'phone', 'email', 'socialLinks', 'updatedAt'];
+      return data.keys().hasOnly(allowedFields) &&
+             (!('name' in data) || (data.name is string && data.name.size() <= 200)) &&
+             (!('title' in data) || (data.title is string && data.title.size() <= 200)) &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 10000)) &&
+             (!('photoUrl' in data) || data.photoUrl == null || (data.photoUrl is string && data.photoUrl.size() <= 1048576)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 100)) &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 200)) &&
+             (!('socialLinks' in data) || (data.socialLinks is map)) &&
+             (!('updatedAt' in data) || data.updatedAt is number);
+    }
+
+    function isValidGalleryImage(data) {
+      let allowedFields = ['url', 'createdAt', 'caption'];
+      return data.keys().hasOnly(allowedFields) &&
+             data.keys().hasAll(['url', 'createdAt']) &&
+             data.url is string && data.url.size() > 0 && data.url.size() <= 1048576 &&
+             (!('caption' in data) || (data.caption is string && data.caption.size() <= 500)) &&
+             data.createdAt is number;
     }
 
     match /users/{userId} {
@@ -57,33 +86,27 @@ service cloud.firestore {
     }
 
     match /members/{memberId} {
-      // Anyone can read the family tree
       allow read: if true;
-      allow create: if isAdmin() && isValidMember(request.resource.data);
-      allow update: if isAdmin() && isValidMember(request.resource.data);
-      allow delete: if isAdmin();
+      allow create, update: if isValidMember(request.resource.data);
+      allow delete: if true;
     }
 
     match /about_posts/{postId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidAboutPost(request.resource.data);
-      allow update: if isAdmin() && isValidAboutPost(request.resource.data);
-      allow delete: if isAdmin();
-    }
-
-    function isValidGalleryImage(data) {
-      let allowedFields = ['url', 'createdAt'];
-      return data.keys().hasOnly(allowedFields) &&
-             data.keys().hasAll(['url', 'createdAt']) &&
-             data.url is string && data.url.size() > 0 && data.url.size() <= 1048576 &&
-             data.createdAt is number;
+      allow create, update: if isValidAboutPost(request.resource.data);
+      allow delete: if true;
     }
 
     match /gallery/{imageId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidGalleryImage(request.resource.data);
-      allow update: if isAdmin() && isValidGalleryImage(request.resource.data);
-      allow delete: if isAdmin();
+      allow create, update: if isValidGalleryImage(request.resource.data);
+      allow delete: if true;
+    }
+
+    match /developer_profile/{docId} {
+      allow read: if true;
+      allow create, update: if isValidDeveloperProfile(request.resource.data);
+      allow delete: if true;
     }
   }
 }

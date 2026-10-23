@@ -4,9 +4,11 @@ import { db } from '../firebase';
 import { Member, TimelineItem } from '../types';
 import { useAuth } from '../AuthContext';
 import { useLanguage } from '../LanguageContext';
-import { Plus, Edit2, Trash2, Image as ImageIcon, Save, X, ArrowUp, ArrowDown, Phone, Mail, Globe, Sparkles, Bold, Italic, Type, Calendar, HelpCircle, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Image as ImageIcon, Save, X, ArrowUp, ArrowDown, Phone, Mail, Globe, Sparkles, Bold, Italic, Type, Calendar, HelpCircle, Search, Heart } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+
+import { COUNTRIES, getCountryDisplay } from '../data/countries';
 
 export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -43,12 +45,43 @@ export default function Admin() {
 
   useEffect(() => {
     if (!isAdmin) return;
+    
+    // Initial cache load
+    try {
+      const cached = localStorage.getItem('family_members_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMembers(parsed);
+          setLoading(false);
+        }
+      }
+    } catch {}
+
     const q = query(collection(db, 'members'), orderBy('order', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
-      setMembers(data);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
+          setMembers(data);
+          try {
+            localStorage.setItem('family_members_cache', JSON.stringify(data));
+          } catch {}
+        }
+        setLoading(false);
+      },
+      () => {
+        // Quota or offline fallback
+        try {
+          const cached = localStorage.getItem('family_members_cache');
+          if (cached) {
+            setMembers(JSON.parse(cached));
+          }
+        } catch {}
+        setLoading(false);
+      }
+    );
     return () => unsubscribe();
   }, [isAdmin]);
 
@@ -68,6 +101,7 @@ export default function Admin() {
             spouseId: targetMember.id,
             gender: targetMember.gender === 'male' ? 'female' : 'male',
             order: targetMember.order + 1,
+            currentlyLiveIn: targetMember.currentlyLiveIn || 'Bangladesh',
             timeline: [],
             socialLinks: {},
           });
@@ -82,6 +116,7 @@ export default function Admin() {
       type: 'son',
       gender: 'male',
       order: members.length + 1,
+      currentlyLiveIn: 'Bangladesh',
       timeline: [],
       socialLinks: {},
     });
@@ -107,6 +142,7 @@ export default function Admin() {
         type: memberData.type,
         order: editingMember.order || (editingMember.id ? 0 : members.length + 1),
         createdAt: editingMember.createdAt || Date.now(),
+        currentlyLiveIn: (memberData.currentlyLiveIn || 'Bangladesh').trim(),
       };
 
       if (memberData.dob) {
@@ -123,7 +159,16 @@ export default function Admin() {
         }
       }
       if (memberData.nameEn) dataToSave.nameEn = memberData.nameEn.trim();
+      if (memberData.maritalStatus) dataToSave.maritalStatus = memberData.maritalStatus.trim();
+      dataToSave.fatherId = memberData.fatherId || null;
+      if (memberData.fatherName) dataToSave.fatherName = memberData.fatherName.trim();
+      dataToSave.motherId = memberData.motherId || null;
+      if (memberData.motherName) dataToSave.motherName = memberData.motherName.trim();
+      if (!dataToSave.parentId && dataToSave.fatherId) {
+        dataToSave.parentId = dataToSave.fatherId;
+      }
       if (memberData.timelineEnded !== undefined) dataToSave.timelineEnded = Boolean(memberData.timelineEnded);
+      if (memberData.isDeceased !== undefined) dataToSave.isDeceased = Boolean(memberData.isDeceased);
       if (memberData.deathYear) dataToSave.deathYear = memberData.deathYear.trim();
       if (memberData.phone) dataToSave.phone = memberData.phone.trim();
       if (memberData.email) dataToSave.email = memberData.email.trim();
@@ -492,6 +537,133 @@ export default function Admin() {
                   />
                 </div>
 
+                {/* Currently Live In (Country Selection) */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5 flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>currently live in - (বর্তমান বাসস্থান)</span>
+                  </label>
+                  <select 
+                    value={editingMember.currentlyLiveIn || 'Bangladesh'} 
+                    onChange={e => setEditingMember({...editingMember, currentlyLiveIn: e.target.value})}
+                    className="w-full p-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#1A3636] outline-none bg-stone-50 text-sm"
+                  >
+                    {COUNTRIES.map(c => (
+                      <option key={c.code} value={c.name}>
+                        {c.flag} {c.nameBn} ({c.name})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Marital Status */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5 flex items-center gap-1.5">
+                    <Heart className="w-3.5 h-3.5 text-rose-500" />
+                    <span>marital status - বৈবাহিক অবস্থা</span>
+                  </label>
+                  <select 
+                    value={editingMember.maritalStatus || ''} 
+                    onChange={e => setEditingMember({...editingMember, maritalStatus: e.target.value})}
+                    className="w-full p-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#1A3636] outline-none bg-stone-50 text-sm"
+                  >
+                    <option value="">নির্বাচন করুন (Select)</option>
+                    <option value="অবিবাহিত">অবিবাহিত (Unmarried / Single)</option>
+                    <option value="বিবাহিত">বিবাহিত (Married)</option>
+                    <option value="ডিভোর্সড / তালাকপ্রাপ্ত">ডিভোর্সড / তালাকপ্রাপ্ত (Divorced)</option>
+                    <option value="বিপত্নীক / বিধবা">বিপত্নীক / বিধবা (Widowed)</option>
+                    <option value="আলাদা বসবাসরত">আলাদা বসবাসরত (Separated)</option>
+                    <option value="বাগদান সম্পন্ন">বাগদান সম্পন্ন (Engaged)</option>
+                    <option value="অন্যান্য">অন্যান্য (Other)</option>
+                  </select>
+                </div>
+
+                {/* Father Selection Dropdown (পিতা নির্বাচন) */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5 flex items-center justify-between">
+                    <span>father - পিতা নির্বাচন করুন</span>
+                    {editingMember.fatherName && (
+                      <span className="text-[11px] text-amber-700 font-normal">বর্তমানে: {editingMember.fatherName}</span>
+                    )}
+                  </label>
+                  <select 
+                    value={editingMember.fatherId || (members.find(m => m.name === editingMember.fatherName)?.id || '')} 
+                    onChange={e => {
+                      const selectedId = e.target.value;
+                      const selectedFather = members.find(m => m.id === selectedId);
+                      setEditingMember({
+                        ...editingMember,
+                        fatherId: selectedId || null,
+                        fatherName: selectedFather ? selectedFather.name : '',
+                        parentId: selectedId || editingMember.parentId || null,
+                      });
+                    }}
+                    className="w-full p-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#1A3636] outline-none bg-stone-50 text-sm"
+                  >
+                    <option value="">-- পিতা নির্বাচন করুন (তালিকা থেকে) --</option>
+                    {members
+                      .filter(m => m.id !== editingMember.id)
+                      .map(m => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} ({m.role || m.type})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                {/* Mother Selection Dropdown (মাতা নির্বাচন) */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5 flex items-center justify-between">
+                    <span>mother - মাতা নির্বাচন করুন</span>
+                    {editingMember.motherName && (
+                      <span className="text-[11px] text-rose-700 font-normal">বর্তমানে: {editingMember.motherName}</span>
+                    )}
+                  </label>
+                  <select 
+                    value={editingMember.motherId || (members.find(m => m.name === editingMember.motherName)?.id || '')} 
+                    onChange={e => {
+                      const selectedId = e.target.value;
+                      const selectedMother = members.find(m => m.id === selectedId);
+                      setEditingMember({
+                        ...editingMember,
+                        motherId: selectedId || null,
+                        motherName: selectedMother ? selectedMother.name : '',
+                      });
+                    }}
+                    className="w-full p-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#1A3636] outline-none bg-stone-50 text-sm"
+                  >
+                    <option value="">-- মাতা নির্বাচন করুন (তালিকা থেকে) --</option>
+                    {members
+                      .filter(m => m.id !== editingMember.id)
+                      .map(m => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} ({m.role || m.type})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                {/* Deceased Status (মৃত/মরহুম) */}
+                <div className="p-3 bg-stone-100 rounded-xl border border-stone-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-stone-800 flex items-center gap-1.5">
+                        <span>মৃত/মরহুম (Deceased)</span>
+                      </span>
+                      <p className="text-[11px] text-stone-500 mt-0.5">সদস্যটি মৃত্যুবরণ করে থাকলে এই অপশনটি অন রাখুন</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={Boolean(editingMember.isDeceased || (editingMember.deathYear && editingMember.deathYear.trim().length > 0))} 
+                        onChange={e => setEditingMember({...editingMember, isDeceased: e.target.checked})}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1A3636]"></div>
+                    </label>
+                  </div>
+                </div>
+
                 {/* Death Year (Optional) */}
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
@@ -501,7 +673,11 @@ export default function Admin() {
                     type="text" 
                     placeholder="e.g. 2021"
                     value={editingMember.deathYear || ''} 
-                    onChange={e => setEditingMember({...editingMember, deathYear: e.target.value})}
+                    onChange={e => setEditingMember({
+                      ...editingMember, 
+                      deathYear: e.target.value,
+                      isDeceased: e.target.value.trim().length > 0 ? true : editingMember.isDeceased
+                    })}
                     className="w-full p-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#1A3636] outline-none bg-stone-50 text-sm font-mono"
                   />
                 </div>

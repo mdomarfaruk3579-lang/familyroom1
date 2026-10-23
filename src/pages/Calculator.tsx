@@ -6,23 +6,57 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Member } from '../types';
 
+import { defaultFamilyMembers } from '../data/defaultMembers';
+
 export default function Calculator() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<Member[]>(() => {
+    try {
+      const cached = localStorage.getItem('family_members_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return defaultFamilyMembers;
+  });
   const [totalAmount, setTotalAmount] = useState<string>('');
-  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>(() => {
+    return defaultFamilyMembers
+      .filter(m => m.type === 'son' || m.type === 'daughter')
+      .map(m => m.id);
+  });
   const [includeWife, setIncludeWife] = useState<boolean>(true);
 
   useEffect(() => {
     const q = query(collection(db, 'members'), orderBy('order', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
-      setMembers(data);
-      // Auto-select sons and daughters by default
-      const defaultIds = data
-        .filter(m => m.type === 'son' || m.type === 'daughter')
-        .map(m => m.id);
-      setSelectedMemberIds(defaultIds);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
+          setMembers(data);
+          // Auto-select sons and daughters by default
+          const defaultIds = data
+            .filter(m => m.type === 'son' || m.type === 'daughter')
+            .map(m => m.id);
+          setSelectedMemberIds(defaultIds);
+        }
+      },
+      (error) => {
+        console.warn("Calculator onSnapshot error (quota/offline):", error);
+        try {
+          const cached = localStorage.getItem('family_members_cache');
+          if (cached) {
+            const data: Member[] = JSON.parse(cached);
+            setMembers(data);
+            const defaultIds = data
+              .filter(m => m.type === 'son' || m.type === 'daughter')
+              .map(m => m.id);
+            setSelectedMemberIds(defaultIds);
+          }
+        } catch {}
+      }
+    );
     return () => unsubscribe();
   }, []);
 

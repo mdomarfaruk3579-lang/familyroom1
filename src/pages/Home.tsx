@@ -9,13 +9,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { Cake, Search, X } from 'lucide-react';
 
+import { defaultFamilyMembers } from '../data/defaultMembers';
+
 export default function Home() {
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<Member[]>(() => {
+    try {
+      const cached = localStorage.getItem('family_members_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return defaultFamilyMembers;
+  });
   const [activeParentId, setActiveParentId] = useState<string | null>(null);
   const [activeGrandchildId, setActiveGrandchildId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,13 +37,36 @@ export default function Home() {
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const q = query(collection(db, 'members'), orderBy('order', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
-      setMembers(data);
-      setLoading(false);
-    });
-    return () => unsubscribe();
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        if (!isMounted) return;
+        if (!snapshot.empty) {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
+          setMembers(data);
+          try {
+            localStorage.setItem('family_members_cache', JSON.stringify(data));
+          } catch {
+            // ignore storage quota issues
+          }
+        }
+        setLoading(false);
+      },
+      (error) => {
+        if (!isMounted) return;
+        console.warn("Firestore Home onSnapshot Notice (quota/offline):", error);
+        setLoading(false);
+        if (error?.message?.includes('Quota') || error?.code === 'resource-exhausted') {
+          window.dispatchEvent(new CustomEvent('firestore_quota_exceeded'));
+        }
+      }
+    );
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const grandpas = useMemo(() => members.filter(m => m.type === 'grandpa'), [members]);

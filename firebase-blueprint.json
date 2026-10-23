@@ -9,6 +9,10 @@
           "type": "string",
           "description": "Full name of the member"
         },
+        "nameEn": {
+          "type": "string",
+          "description": "Name in English"
+        },
         "role": {
           "type": "string",
           "description": "Relationship or role (e.g., দাদা, দাদি, ছেলে ১, মেয়ে)"
@@ -20,6 +24,10 @@
         "dob": {
           "type": "string",
           "description": "Date of birth in DD/MM/YYYY format"
+        },
+        "currentlyLiveIn": {
+          "type": "string",
+          "description": "Country where the member currently lives"
         },
         "phone": {
           "type": "string",
@@ -36,6 +44,10 @@
         "timeline": {
           "type": "array",
           "description": "Timeline events"
+        },
+        "timelineEnded": {
+          "type": "boolean",
+          "description": "Whether timeline has ended"
         },
         "bio": {
           "type": "string",
@@ -54,16 +66,27 @@
         },
         "type": {
           "type": "string",
-          "enum": ["grandpa", "grandma", "son", "daughter", "spouse", "grandchild", "great-grandchild"],
+          "enum": ["grandpa", "grandma", "son", "daughter", "spouse", "grandchild", "great-grandchild", "great-great-grandchild"],
           "description": "Type of node in the tree"
         },
         "parentId": {
           "type": "string",
           "description": "ID of the parent (for grandchildren)"
         },
+        "spouseId": {
+          "type": "string",
+          "description": "ID of the spouse"
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["male", "female"]
+        },
         "order": {
           "type": "number",
           "description": "Order for sorting siblings"
+        },
+        "createdAt": {
+          "type": "number"
         }
       },
       "required": ["name", "role", "type", "order"]
@@ -105,6 +128,37 @@
         }
       },
       "required": ["title", "content", "createdAt", "order"]
+    },
+    "DeveloperProfile": {
+      "title": "Developer Profile",
+      "description": "Profile information of the application developer.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "bio": {
+          "type": "string"
+        },
+        "photoUrl": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "socialLinks": {
+          "type": "object"
+        },
+        "updatedAt": {
+          "type": "number"
+        }
+      }
     }
   },
   "firestore": {
@@ -125,6 +179,12 @@
         "$ref": "AboutPost"
       },
       "description": "Stores blog posts for the About Us page."
+    },
+    "/developer_profile/{docId}": {
+      "schema": {
+        "$ref": "DeveloperProfile"
+      },
+      "description": "Stores developer profile information."
     }
   }
 }

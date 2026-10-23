@@ -8,11 +8,14 @@ import { useAuth } from '../AuthContext';
 import { useLanguage } from '../LanguageContext';
 import MemberCard from '../components/MemberCard';
 import { motion } from 'framer-motion';
+import { getCountryDisplay } from '../data/countries';
 
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
   const [member, setMember] = useState<Member | null>(null);
   const [spouse, setSpouse] = useState<Member | null>(null);
+  const [father, setFather] = useState<Member | null>(null);
+  const [mother, setMother] = useState<Member | null>(null);
   const [children, setChildren] = useState<Member[]>([]);
   const { isAdmin } = useAuth();
   const { t, lang, translateRole } = useLanguage();
@@ -32,42 +35,100 @@ export default function Profile() {
   useEffect(() => {
     if (!id) return;
 
-    // Listen to main member
-    const unsubMember = onSnapshot(doc(db, 'members', id), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = { id: docSnap.id, ...docSnap.data() } as Member;
-        setMember(data);
-        
-        // Listen to spouse
-        const qSpouse = query(collection(db, 'members'), where('spouseId', '==', id));
-        const unsubSpouse1 = onSnapshot(qSpouse, (snap) => {
-          if (!snap.empty) {
-            setSpouse({ id: snap.docs[0].id, ...snap.docs[0].data() } as Member);
-          } else if (data.spouseId) {
-            const unsubSpouse2 = onSnapshot(doc(db, 'members', data.spouseId), (spouseDoc) => {
-              if (spouseDoc.exists()) {
-                setSpouse({ id: spouseDoc.id, ...spouseDoc.data() } as Member);
-              }
-            });
-            return () => unsubSpouse2();
-          } else {
-            setSpouse(null);
-          }
-        });
+    // Helper to resolve relatives from a list of members
+    const resolveRelatives = (current: Member, list: Member[]) => {
+      // Spouse
+      const spouseFound = list.find(m => m.spouseId === current.id || (current.spouseId && m.id === current.spouseId));
+      setSpouse(spouseFound || null);
 
-        // Listen to children
-        const qChildren = query(collection(db, 'members'), where('parentId', '==', id));
-        const unsubChildren1 = onSnapshot(qChildren, (snap) => {
-          let kids = snap.docs.map(d => ({ id: d.id, ...d.data() } as Member));
-          setChildren(kids.sort((a, b) => a.order - b.order));
-        });
+      // Children
+      const kids = list.filter(m => m.parentId === current.id).sort((a, b) => a.order - b.order);
+      setChildren(kids);
 
-        return () => {
-          unsubSpouse1();
-          unsubChildren1();
-        };
+      // Father
+      const fatherFound = list.find(m => 
+        (current.fatherId && m.id === current.fatherId) ||
+        (current.parentId && m.id === current.parentId && (m.gender === 'male' || m.type === 'son' || m.type === 'grandpa')) ||
+        (current.fatherName && m.name === current.fatherName)
+      );
+      setFather(fatherFound || null);
+
+      // Mother
+      const motherFound = list.find(m => 
+        (current.motherId && m.id === current.motherId) ||
+        (current.motherName && m.name === current.motherName) ||
+        (fatherFound && (m.spouseId === fatherFound.id || fatherFound.spouseId === m.id))
+      );
+      setMother(motherFound || null);
+    };
+
+    // Initial cache fallback
+    try {
+      const cached = localStorage.getItem('family_members_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached) as Member[];
+        const found = parsed.find(m => m.id === id);
+        if (found) {
+          setMember(found);
+          resolveRelatives(found, parsed);
+        }
       }
-    });
+    } catch {}
+
+    // Listen to main member
+    const unsubMember = onSnapshot(
+      doc(db, 'members', id), 
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = { id: docSnap.id, ...docSnap.data() } as Member;
+          setMember(data);
+          
+          // Listen to spouse
+          const qSpouse = query(collection(db, 'members'), where('spouseId', '==', id));
+          const unsubSpouse1 = onSnapshot(
+            qSpouse, 
+            (snap) => {
+              if (!snap.empty) {
+                setSpouse({ id: snap.docs[0].id, ...snap.docs[0].data() } as Member);
+              } else if (data.spouseId) {
+                const unsubSpouse2 = onSnapshot(
+                  doc(db, 'members', data.spouseId), 
+                  (spouseDoc) => {
+                    if (spouseDoc.exists()) {
+                      setSpouse({ id: spouseDoc.id, ...spouseDoc.data() } as Member);
+                    }
+                  },
+                  () => {}
+                );
+                return () => unsubSpouse2();
+              } else {
+                setSpouse(null);
+              }
+            },
+            () => {}
+          );
+
+          // Listen to children
+          const qChildren = query(collection(db, 'members'), where('parentId', '==', id));
+          const unsubChildren1 = onSnapshot(
+            qChildren, 
+            (snap) => {
+              let kids = snap.docs.map(d => ({ id: d.id, ...d.data() } as Member));
+              setChildren(kids.sort((a, b) => a.order - b.order));
+            },
+            () => {}
+          );
+
+          return () => {
+            unsubSpouse1();
+            unsubChildren1();
+          };
+        }
+      },
+      () => {
+        // Quota or offline fallback: already populated from cache
+      }
+    );
 
     return () => unsubMember();
   }, [id]);
@@ -91,9 +152,18 @@ export default function Profile() {
       exit={{ opacity: 0, y: -20 }}
       className="max-w-4xl mx-auto py-8 px-4"
     >
-      <Link to="/" className="inline-flex items-center gap-2 text-[#1A3636] hover:text-amber-700 mb-6 font-medium transition-colors cursor-pointer">
-        <ArrowLeft className="w-5 h-5" /> {t('backToFamilyTree')}
-      </Link>
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+        <Link to="/" className="inline-flex items-center gap-2 text-[#1A3636] hover:text-amber-700 font-medium transition-colors cursor-pointer">
+          <ArrowLeft className="w-5 h-5" /> {t('backToFamilyTree')}
+        </Link>
+        <Link 
+          to="/islamic" 
+          className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#0d342a] via-[#13493b] to-[#0c3127] text-amber-200 border border-amber-400/50 hover:border-amber-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all text-xs sm:text-sm font-semibold group cursor-pointer"
+        >
+          <span className="text-base group-hover:rotate-12 transition-transform">🌙</span>
+          <span className="tracking-wide">ফ্যামিলি ইসলামিক</span>
+        </Link>
+      </div>
 
       <div className="bg-white rounded-3xl shadow-lg p-6 sm:p-8 border border-stone-200 relative">
         {isAdmin && (
@@ -132,18 +202,57 @@ export default function Profile() {
               {translateRole(member.role)}
             </div>
             
-            {/* Dates */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-4 text-xs sm:text-sm text-stone-600 justify-center md:justify-start">
+            {/* Dates & Location */}
+            <div className="flex flex-col gap-1.5 mb-4 text-xs sm:text-sm text-stone-600 items-center md:items-start">
               {member.dob && (
                 <div className="flex items-center gap-1.5 font-medium text-stone-900">
                   <Cake className="w-4 h-4 text-amber-600" />
                   <span>{t('dob')}: <strong className="font-mono text-amber-800">{member.dob}</strong></span>
                 </div>
               )}
-              {member.deathYear && (
-                <div className="flex items-center gap-1.5 text-stone-500">
-                  <Calendar className="w-4 h-4 text-stone-400" />
-                  <span>{t('died')}: {member.deathYear}</span>
+
+              {/* currently live in - directly below Date of Birth */}
+              {(() => {
+                const countryInfo = getCountryDisplay(member.currentlyLiveIn);
+                return (
+                  <div className="flex items-center gap-1.5 font-medium text-emerald-900 bg-emerald-50/80 border border-emerald-200/80 px-3 py-1 rounded-full text-xs w-fit">
+                    <span className="text-sm">{countryInfo.flag}</span>
+                    <span>currently live in - <strong>{countryInfo.name}</strong></span>
+                  </div>
+                );
+              })()}
+
+              {/* Marital Status */}
+              {member.maritalStatus && (
+                <div className="flex items-center gap-1.5 font-medium text-stone-800 text-xs sm:text-sm">
+                  <Heart className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                  <span>বৈবাহিক অবস্থা: <strong>{member.maritalStatus}</strong></span>
+                </div>
+              )}
+
+              {/* Parents: Father & Mother */}
+              {(member.fatherName || member.motherName) && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-stone-700 pt-0.5">
+                  {member.fatherName && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-stone-400 font-medium">পিতা:</span>
+                      <strong className="text-stone-800">{member.fatherName}</strong>
+                    </div>
+                  )}
+                  {member.fatherName && member.motherName && <span className="text-stone-300">•</span>}
+                  {member.motherName && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-stone-400 font-medium">মাতা:</span>
+                      <strong className="text-stone-800">{member.motherName}</strong>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {(member.isDeceased || member.deathYear) && (
+                <div className="flex items-center gap-1.5 text-stone-700 bg-stone-100 border border-stone-200/90 px-3 py-1 rounded-full text-xs w-fit">
+                  <span className="font-semibold">{member.gender === 'female' ? 'মরহুমা' : 'মরহুম'}</span>
+                  {member.deathYear ? <span>(মৃত্যু: {member.deathYear})</span> : <span>(ইন্তেকাল করেছেন)</span>}
                 </div>
               )}
             </div>
@@ -370,44 +479,80 @@ export default function Profile() {
         )}
       </div>
 
-      {/* Immediate Family Section */}
-      {member.type !== 'grandpa' && member.type !== 'grandma' && (
-        <div className="mt-12">
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#1A3636] mb-6 flex items-center gap-2 border-b border-stone-200 pb-2">
-            <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" /> 
-            <span>{lang === 'bn' ? 'নিকটাত্মীয়' : 'Immediate Family'}</span>
-          </h2>
-          
-          <div className="flex flex-wrap gap-8 justify-center md:justify-start">
+      {/* Immediate Family Section (নিকটাত্মীয়) */}
+      <div className="mt-12">
+        <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#1A3636] mb-6 flex items-center gap-2 border-b border-stone-200 pb-2">
+          <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" /> 
+          <span>{lang === 'bn' ? 'নিকটাত্মীয়' : 'Immediate Family'}</span>
+        </h2>
+        
+        <div className="flex flex-wrap gap-6 sm:gap-8 justify-center md:justify-start">
+          {/* 1. Father (পিতা) */}
+          {(father || member.fatherName) && (
             <div className="flex flex-col items-center">
-              <span className="text-xs sm:text-sm font-medium text-stone-500 mb-2">{t('spouse')}</span>
-              {spouse ? (
-                <MemberCard member={spouse} />
-              ) : isAdmin ? (
-                <Link to={`/admin?addSpouseFor=${member.id}`} className="w-20 sm:w-24 h-24 sm:h-28 rounded-2xl border-2 border-dashed border-amber-400 flex flex-col items-center justify-center text-amber-700 hover:bg-stone-50 transition-colors">
-                  <Plus className="w-6 h-6 mb-1" />
-                  <span className="text-[10px] font-medium">{lang === 'bn' ? 'স্বামী/স্ত্রী যোগ করুন' : 'Add Spouse'}</span>
-                </Link>
+              <span className="text-xs sm:text-sm font-semibold text-stone-600 mb-2">পিতা (Father)</span>
+              {father ? (
+                <MemberCard member={father} />
               ) : (
-                <p className="text-stone-400 italic text-xs mt-4">{lang === 'bn' ? 'যোগ করা হয়নি' : 'Not added'}</p>
-              )}
-            </div>
-            
-            <div className="flex flex-col items-center md:items-start w-full md:w-auto mt-6 md:mt-0">
-              <span className="text-xs sm:text-sm font-medium text-stone-500 mb-2">{t('children')}</span>
-              {children.length > 0 ? (
-                <div className="flex flex-wrap gap-4">
-                  {children.map(child => (
-                    <MemberCard key={child.id} member={child} />
-                  ))}
+                <div className="w-20 sm:w-24 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-center shadow-xs flex flex-col items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-amber-200/80 flex items-center justify-center font-bold text-amber-900 mb-1 text-xs">
+                    {member.fatherName?.slice(0, 1)}
+                  </div>
+                  <h4 className="text-[11px] font-bold text-stone-900 truncate max-w-full">{member.fatherName}</h4>
+                  <span className="text-[9px] text-amber-800">পিতা</span>
                 </div>
-              ) : (
-                <p className="text-stone-400 italic text-xs mt-4">{t('noChildren')}</p>
               )}
             </div>
+          )}
+
+          {/* 2. Mother (মাতা) */}
+          {(mother || member.motherName) && (
+            <div className="flex flex-col items-center">
+              <span className="text-xs sm:text-sm font-semibold text-stone-600 mb-2">মাতা (Mother)</span>
+              {mother ? (
+                <MemberCard member={mother} />
+              ) : (
+                <div className="w-20 sm:w-24 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-center shadow-xs flex flex-col items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-rose-200/80 flex items-center justify-center font-bold text-rose-900 mb-1 text-xs">
+                    {member.motherName?.slice(0, 1)}
+                  </div>
+                  <h4 className="text-[11px] font-bold text-stone-900 truncate max-w-full">{member.motherName}</h4>
+                  <span className="text-[9px] text-rose-800">মাতা</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3. Spouse (স্বামী / স্ত্রী) */}
+          <div className="flex flex-col items-center">
+            <span className="text-xs sm:text-sm font-semibold text-stone-600 mb-2">{t('spouse')}</span>
+            {spouse ? (
+              <MemberCard member={spouse} />
+            ) : isAdmin ? (
+              <Link to={`/admin?addSpouseFor=${member.id}`} className="w-20 sm:w-24 h-24 sm:h-28 rounded-2xl border-2 border-dashed border-amber-400 flex flex-col items-center justify-center text-amber-700 hover:bg-stone-50 transition-colors">
+                <Plus className="w-6 h-6 mb-1" />
+                <span className="text-[10px] font-medium">{lang === 'bn' ? 'স্বামী/স্ত্রী যোগ করুন' : 'Add Spouse'}</span>
+              </Link>
+            ) : (
+              <p className="text-stone-400 italic text-xs mt-4">{lang === 'bn' ? 'যোগ করা হয়নি' : 'Not added'}</p>
+            )}
+          </div>
+          
+          {/* 4. Children (সন্তানসন্ততি) */}
+          <div className="flex flex-col items-center md:items-start w-full md:w-auto">
+            <span className="text-xs sm:text-sm font-semibold text-stone-600 mb-2">{t('children')}</span>
+            {children.length > 0 ? (
+              <div className="flex flex-wrap gap-4">
+                {children.map(child => (
+                  <MemberCard key={child.id} member={child} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-stone-400 italic text-xs mt-4">{t('noChildren')}</p>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </motion.div>
   );
 }

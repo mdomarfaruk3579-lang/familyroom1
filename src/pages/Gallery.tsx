@@ -18,12 +18,36 @@ export default function Gallery() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     const q = query(collection(db, 'gallery'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryImage));
-      setPhotos(data);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryImage));
+        setPhotos(data);
+        try {
+          localStorage.setItem('family_gallery_cache', JSON.stringify(data));
+        } catch {}
+        setLoading(false);
+      },
+      (error) => {
+        console.warn("Firestore Gallery onSnapshot Notice (quota/offline):", error);
+        try {
+          const cached = localStorage.getItem('family_gallery_cache');
+          if (cached) {
+            setPhotos(JSON.parse(cached));
+          }
+        } catch {}
+        setLoading(false);
+        if (error?.message?.includes('Quota') || error?.code === 'resource-exhausted') {
+          window.dispatchEvent(new CustomEvent('firestore_quota_exceeded'));
+        }
+      }
+    );
     return () => unsubscribe();
   }, []);
 
@@ -91,20 +115,31 @@ export default function Gallery() {
 
   const confirmDelete = async () => {
     if (!photoToDelete) return;
+    const idToDelete = photoToDelete;
+    setPhotoToDelete(null);
+    if (selectedPhoto?.id === idToDelete) {
+      setSelectedPhoto(null);
+    }
+
+    // Immediately remove from local state and update local cache
+    setPhotos(prev => {
+      const updated = prev.filter(p => p.id !== idToDelete);
+      try {
+        localStorage.setItem('family_gallery_cache', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
     try {
-      await deleteDoc(doc(db, 'gallery', photoToDelete));
-      if (selectedPhoto?.id === photoToDelete) {
-        setSelectedPhoto(null);
-      }
-      setPhotoToDelete(null);
+      await deleteDoc(doc(db, 'gallery', idToDelete));
     } catch (error: any) {
       console.error("Error deleting photo:", error);
       alert(`ছবি মুছে ফেলতে সমস্যা হয়েছে: ${error.message}`);
-      setPhotoToDelete(null);
     }
   };
 
   const handleDeleteClick = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
     e.stopPropagation();
     setPhotoToDelete(id);
   };
@@ -270,7 +305,7 @@ export default function Gallery() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
             onClick={() => setPhotoToDelete(null)}
           >
             <motion.div

@@ -37,26 +37,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         let role: 'admin' | 'user' = 'user';
         
+        // Default bootstrap admin check
+        if (firebaseUser.email === 'mdomarfaruk3579@gmail.com') {
+          role = 'admin';
+        }
+
         try {
           const userDoc = await getDoc(userDocRef);
           
           if (localStorage.getItem('makeAdmin') === 'true' || adminUnlocked) {
             role = 'admin';
-            await setDoc(userDocRef, { email: firebaseUser.email, role: 'admin' }, { merge: true });
+            try {
+              await setDoc(userDocRef, { email: firebaseUser.email, role: 'admin' }, { merge: true });
+            } catch (err) {
+              console.warn("Could not set admin role document (quota/offline):", err);
+            }
             localStorage.removeItem('makeAdmin');
           } else if (userDoc.exists()) {
             role = userDoc.data().role;
           } else {
-            if (firebaseUser.email === 'mdomarfaruk3579@gmail.com' && firebaseUser.emailVerified) {
-              role = 'admin';
-              await setDoc(userDocRef, { email: firebaseUser.email, role: 'admin' });
-            } else {
-              await setDoc(userDocRef, { email: firebaseUser.email, role: 'user' });
+            try {
+              await setDoc(userDocRef, { email: firebaseUser.email, role: role });
+            } catch (err) {
+              console.warn("Could not create user document (quota/offline):", err);
             }
           }
-        } catch (error) {
-          console.error("Error fetching user role:", error);
-          if (firebaseUser.email === 'mdomarfaruk3579@gmail.com') {
+        } catch {
+          // Gracefully fallback on quota limit or offline
+          if (firebaseUser.email === 'mdomarfaruk3579@gmail.com' || adminUnlocked) {
             role = 'admin';
           }
         }

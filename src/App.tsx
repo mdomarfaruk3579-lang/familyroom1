@@ -9,6 +9,7 @@ import Statistics from './pages/Statistics';
 import Calculator from './pages/Calculator';
 import AboutUs from './pages/AboutUs';
 import Login from './pages/Login';
+import IslamicHub from './pages/IslamicHub';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BackgroundAnimation from './components/BackgroundAnimation';
@@ -32,6 +33,8 @@ export default function App() {
                 <Route path="/statistics" element={<Statistics />} />
                 <Route path="/calculator" element={<Calculator />} />
                 <Route path="/about" element={<AboutUs />} />
+                <Route path="/islamic" element={<IslamicHub />} />
+                <Route path="/islamic/*" element={<IslamicHub />} />
               </Routes>
             </main>
             <Footer />
