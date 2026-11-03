@@ -338,42 +338,80 @@ export default function Home() {
     <div className="flex flex-col items-center w-full max-w-full pb-20 pt-2 sm:pt-4">
       {/* Top Banner: Upcoming Birthday Live Button + Title + Small Search Bar */}
       <div className="text-center mb-8 sm:mb-10 w-full max-w-xl px-4 flex flex-col items-center">
-        {/* 1. Upcoming Birthday Live Badge above 'ফ্যামিলি চার্ট' */}
-        {/* 1. Upcoming Birthday Live Badge: Ultra-premium compact luxury design with breathing glow animation */}
-        <motion.button
-          animate={{ 
-            y: [0, -2.5, 0],
-            boxShadow: [
-              "0 2px 8px rgba(212,175,55,0.18)",
-              "0 4px 16px rgba(212,175,55,0.38)",
-              "0 2px 8px rgba(212,175,55,0.18)"
-            ]
-          }}
-          transition={{ 
-            duration: 3, 
-            repeat: Infinity, 
-            ease: "easeInOut" 
-          }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowBirthdayModal(true)}
-          className="inline-flex items-center gap-2 px-3.5 py-1 sm:px-4 sm:py-1 rounded-full bg-gradient-to-r from-[#0d1e1e] via-[#1A3636] to-[#0d1e1e] border border-[#D4AF37]/65 hover:border-[#D4AF37] text-white text-xs mb-3 cursor-pointer group transition-all select-none backdrop-blur-xs shadow-xs"
-        >
-          <span 
-            className="text-xs sm:text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-100 to-amber-300 drop-shadow-xs font-serif"
+        {/* 1. Top Action Badges: Birthday Live Badge on Left + Family Game Button on Right (Strictly side-by-side on mobile) */}
+        <div className="flex items-center justify-center flex-nowrap gap-1.5 sm:gap-3 mb-3.5 w-full max-w-full px-1">
+          {/* Left: সামনে যাদের জন্মদিন */}
+          <motion.button
+            animate={{ 
+              y: [0, -2.5, 0],
+              boxShadow: [
+                "0 2px 8px rgba(212,175,55,0.18)",
+                "0 4px 16px rgba(212,175,55,0.38)",
+                "0 2px 8px rgba(212,175,55,0.18)"
+              ]
+            }}
+            transition={{ 
+              duration: 3, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowBirthdayModal(true)}
+            className="inline-flex items-center gap-1 sm:gap-2 px-2.5 py-1 sm:px-4 sm:py-1 rounded-full bg-gradient-to-r from-[#0d1e1e] via-[#1A3636] to-[#0d1e1e] border border-[#D4AF37]/65 hover:border-[#D4AF37] text-white cursor-pointer group transition-all select-none backdrop-blur-xs shadow-xs shrink-0"
           >
-            সামনে যাদের জন্মদিন
-          </span>
-          <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-gradient-to-tr from-emerald-500 to-teal-300 shadow-[0_0_6px_#10b981]"></span>
-          </span>
-          {upcomingCount > 0 && (
-            <span className="bg-gradient-to-r from-amber-400 to-amber-300 text-stone-950 text-[10px] font-bold px-1.5 py-0.2 rounded-full font-mono shadow-xs">
-              {upcomingCount}
+            <span 
+              className="text-[10px] min-[360px]:text-[11px] sm:text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-100 to-amber-300 drop-shadow-xs font-serif whitespace-nowrap"
+            >
+              সামনে যাদের জন্মদিন
             </span>
-          )}
-        </motion.button>
+            <span className="flex h-1.5 w-1.5 sm:h-2 sm:w-2 relative shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-gradient-to-tr from-emerald-500 to-teal-300 shadow-[0_0_6px_#10b981]"></span>
+            </span>
+            {upcomingCount > 0 && (
+              <span className="bg-gradient-to-r from-amber-400 to-amber-300 text-stone-950 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded-full font-mono shadow-xs shrink-0">
+                {upcomingCount}
+              </span>
+            )}
+          </motion.button>
+
+          {/* Right: ফ্যামিলি গেম */}
+          <motion.button
+            animate={{ 
+              y: [0, -2.5, 0],
+              boxShadow: [
+                "0 2px 8px rgba(212,175,55,0.18)",
+                "0 4px 16px rgba(212,175,55,0.38)",
+                "0 2px 8px rgba(212,175,55,0.18)"
+              ]
+            }}
+            transition={{ 
+              duration: 3, 
+              delay: 0.4,
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/games')}
+            className="inline-flex items-center gap-1 sm:gap-2 px-2.5 py-1 sm:px-4 sm:py-1 rounded-full bg-gradient-to-r from-[#0d1e1e] via-[#1A3636] to-[#0d1e1e] border border-[#D4AF37]/65 hover:border-[#D4AF37] text-white cursor-pointer group transition-all select-none backdrop-blur-xs shadow-xs shrink-0"
+          >
+            <span className="text-xs sm:text-sm shrink-0">🎮</span>
+            <span 
+              className="text-[10px] min-[360px]:text-[11px] sm:text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-100 to-amber-300 drop-shadow-xs font-serif whitespace-nowrap"
+            >
+              ফ্যামিলি গেম
+            </span>
+            <span className="flex h-1.5 w-1.5 sm:h-2 sm:w-2 relative shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-80"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-gradient-to-tr from-amber-400 to-yellow-200 shadow-[0_0_6px_#f59e0b]"></span>
+            </span>
+            <span className="bg-gradient-to-r from-amber-400 to-amber-300 text-stone-950 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded-full font-mono shadow-xs shrink-0">
+              ৪টি গেম
+            </span>
+          </motion.button>
+        </div>
 
         {/* 2. Title: ফ্যামিলি চার্ট / Family Chart */}
         <Link to="/statistics" className="group inline-block">

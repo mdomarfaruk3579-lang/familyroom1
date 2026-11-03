@@ -169,6 +169,8 @@ export default function Admin() {
       }
       if (memberData.timelineEnded !== undefined) dataToSave.timelineEnded = Boolean(memberData.timelineEnded);
       if (memberData.isDeceased !== undefined) dataToSave.isDeceased = Boolean(memberData.isDeceased);
+      if (memberData.isChild !== undefined) dataToSave.isChild = Boolean(memberData.isChild);
+      if (memberData.childAgeCategory) dataToSave.childAgeCategory = memberData.childAgeCategory.trim();
       if (memberData.deathYear) dataToSave.deathYear = memberData.deathYear.trim();
       if (memberData.phone) dataToSave.phone = memberData.phone.trim();
       if (memberData.email) dataToSave.email = memberData.email.trim();
@@ -662,6 +664,50 @@ export default function Admin() {
                       <div className="w-11 h-6 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1A3636]"></div>
                     </label>
                   </div>
+                </div>
+
+                {/* Child Status (শিশু - ৮ বছরের কম) */}
+                <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                        <span className="text-sm">👶</span>
+                        <span>শিশু (Child)</span>
+                      </span>
+                      <p className="text-[11px] text-amber-700 mt-0.5">সদস্যটি শিশু হলে এই অপশনটি চালু করুন</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={Boolean(editingMember.isChild)} 
+                        onChange={e => {
+                          const checked = e.target.checked;
+                          setEditingMember({
+                            ...editingMember, 
+                            isChild: checked,
+                            childAgeCategory: checked ? (editingMember.childAgeCategory || '৮ বছরের কম') : ''
+                          });
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                    </label>
+                  </div>
+
+                  {editingMember.isChild && (
+                    <div className="mt-2.5 pt-2 border-t border-amber-200">
+                      <label className="block text-[11px] font-semibold text-amber-900 mb-1">
+                        বয়সের ধরন / ক্যাটাগরি:
+                      </label>
+                      <select
+                        value={editingMember.childAgeCategory || '৮ বছরের কম'}
+                        onChange={e => setEditingMember({...editingMember, childAgeCategory: e.target.value})}
+                        className="w-full p-2 border border-amber-300 rounded-lg bg-white text-xs text-amber-950 font-medium focus:ring-2 focus:ring-amber-500 outline-none"
+                      >
+                        <option value="৮ বছরের কম">৮ বছরের কম (Under 8 years)</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 {/* Death Year (Optional) */}

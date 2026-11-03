@@ -16,6 +16,8 @@ export interface Member {
   currentlyLiveIn?: string; // country name, defaults to 'Bangladesh'
   maritalStatus?: string; // e.g. 'বিবাহিত', 'অবিবাহিত', etc.
   isDeceased?: boolean; // মৃত / মরহুম
+  isChild?: boolean; // শিশু
+  childAgeCategory?: string; // e.g. '৮ বছরের কম'
   fatherId?: string | null;
   fatherName?: string;
   motherId?: string | null;

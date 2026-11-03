@@ -222,6 +222,14 @@ export default function Profile() {
                 );
               })()}
 
+              {/* Child status */}
+              {(member.isChild || member.childAgeCategory) && (
+                <div className="flex items-center gap-1.5 font-medium text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full text-xs w-fit">
+                  <span className="text-sm">👶</span>
+                  <span>শিশু (<strong>{member.childAgeCategory || '৮ বছরের কম'}</strong>)</span>
+                </div>
+              )}
+
               {/* Marital Status */}
               {member.maritalStatus && (
                 <div className="flex items-center gap-1.5 font-medium text-stone-800 text-xs sm:text-sm">

@@ -61,19 +61,7 @@ export default function Statistics() {
   const daughters = useMemo(() => members.filter(m => m.type === 'daughter'), [members]);
   const probashiMembers = useMemo(() => members.filter(m => isProbashi(m.currentlyLiveIn)), [members]);
   const deshiMembers = useMemo(() => members.filter(m => !isProbashi(m.currentlyLiveIn)), [members]);
-
-  const stats = useMemo(() => [
-    { title: lang === 'bn' ? 'মোট সদস্য' : 'Total Members', count: members.length, icon: Users, color: 'text-blue-600', members: members, isProbashi: false },
-    { title: lang === 'bn' ? 'দাদা-দাদি' : 'Grandparents', count: grandpas.length + grandmas.length, icon: User, color: 'text-indigo-600', members: [...grandpas, ...grandmas], isProbashi: false },
-    { title: lang === 'bn' ? 'ছেলে' : 'Sons', count: sons.length, icon: User, color: 'text-blue-500', members: sons, isProbashi: false },
-    { title: lang === 'bn' ? 'মেয়ে' : 'Daughters', count: daughters.length, icon: User, color: 'text-pink-500', members: daughters, isProbashi: false },
-    { title: lang === 'bn' ? 'প্রবাসী' : 'Living Abroad', count: probashiMembers.length, icon: Globe, color: 'text-emerald-600', members: probashiMembers, isProbashi: true },
-    { title: lang === 'bn' ? 'স্ত্রী/স্বামী' : 'Spouses', count: members.filter(m => m.type === 'spouse').length, icon: Heart, color: 'text-red-500', members: members.filter(m => m.type === 'spouse'), isProbashi: false },
-    { title: lang === 'bn' ? 'নাতি-নাতনি' : 'Grandchildren', count: members.filter(m => m.type === 'grandchild').length, icon: Baby, color: 'text-green-500', members: members.filter(m => m.type === 'grandchild'), isProbashi: false },
-    { title: lang === 'bn' ? 'নাতি-নাতনির সন্তান' : 'Great-Grandchildren', count: members.filter(m => m.type === 'great-grandchild' || m.type === 'great-great-grandchild').length, icon: Baby, color: 'text-teal-500', members: members.filter(m => m.type === 'great-grandchild' || m.type === 'great-great-grandchild'), isProbashi: false },
-    { title: lang === 'bn' ? 'পুরুষ' : 'Male', count: members.filter(m => m.gender === 'male').length, icon: User, color: 'text-sky-600', members: members.filter(m => m.gender === 'male'), isProbashi: false },
-    { title: lang === 'bn' ? 'মহিলা' : 'Female', count: members.filter(m => m.gender === 'female').length, icon: User, color: 'text-rose-500', members: members.filter(m => m.gender === 'female'), isProbashi: false }
-  ], [members, grandpas, grandmas, sons, daughters, probashiMembers, lang]);
+  const grandchildren = useMemo(() => members.filter(m => m.type === 'grandchild'), [members]);
 
   const getFamilyMembers = useMemo(() => (rootId: string) => {
     const familyIds = new Set<string>();
@@ -108,6 +96,81 @@ export default function Statistics() {
         return (a.order || 0) - (b.order || 0);
       });
   }, [members]);
+
+  // 1. ছেলেদের বউ (৪ ছেলের বউ)
+  const sonsWives = useMemo(() => {
+    return members.filter(m => {
+      const isSpouseOfSon = sons.some(s => s.id === m.spouseId || s.spouseId === m.id);
+      const hasSonSpouseRole = m.role && (m.role.includes('পুত্রবধূ') || m.role.includes('ছেলের বউ'));
+      return isSpouseOfSon || hasSonSpouseRole;
+    });
+  }, [members, sons]);
+
+  // 2. মেয়েদের জামাই (৫ মেয়ের জামাই)
+  const daughtersHusbands = useMemo(() => {
+    return members.filter(m => {
+      const isSpouseOfDaughter = daughters.some(d => d.id === m.spouseId || d.spouseId === m.id);
+      const hasDaughterSpouseRole = m.role && (m.role.includes('জামাই') || m.role.includes('মেয়ের জামাই'));
+      return isSpouseOfDaughter || hasDaughterSpouseRole;
+    });
+  }, [members, daughters]);
+
+  // 3. নাতি/নাত্নির বউ/জামাই
+  const grandchildrenSpouses = useMemo(() => {
+    return members.filter(m => {
+      const isSpouseOfGrandchild = grandchildren.some(g => g.id === m.spouseId || g.spouseId === m.id);
+      const hasGcSpouseRole = m.role && (m.role.includes('নাতির বউ') || m.role.includes('নাতনির জামাই') || m.role.includes('নাতি/নাত্নির'));
+      return isSpouseOfGrandchild || hasGcSpouseRole;
+    });
+  }, [members, grandchildren]);
+
+  // 4. আমাদের বংশ: ৪ ছেলেদের পরিবারের লোকজন (মেয়েদের না)
+  const ourLineage = useMemo(() => {
+    const familySet = new Set<string>();
+    sons.forEach(son => {
+      const branch = getFamilyMembers(son.id);
+      branch.forEach(m => familySet.add(m.id));
+    });
+    return Array.from(familySet)
+      .map(id => members.find(m => m.id === id)!)
+      .filter(Boolean);
+  }, [members, sons, getFamilyMembers]);
+
+  // 5. ফুফুদের বংশ: মেয়েদের পরিবারের লোকজন
+  const auntsLineage = useMemo(() => {
+    const familySet = new Set<string>();
+    daughters.forEach(daughter => {
+      const branch = getFamilyMembers(daughter.id);
+      branch.forEach(m => familySet.add(m.id));
+    });
+    return Array.from(familySet)
+      .map(id => members.find(m => m.id === id)!)
+      .filter(Boolean);
+  }, [members, daughters, getFamilyMembers]);
+
+  // 6. শিশু (৮ বছরের কম)
+  const childrenMembers = useMemo(() => {
+    return members.filter(m => Boolean(m.isChild) || m.childAgeCategory === '৮ বছরের কম');
+  }, [members]);
+
+  const stats = useMemo(() => [
+    { title: lang === 'bn' ? 'মোট সদস্য' : 'Total Members', count: members.length, icon: Users, color: 'text-blue-600', members: members, isProbashi: false },
+    { title: 'আমাদের বংশ', count: ourLineage.length, icon: Users, color: 'text-[#1A3636]', members: ourLineage, isProbashi: false, subtitle: '৪ ছেলের পরিবারবর্গ' },
+    { title: 'ফুফুদের বংশ', count: auntsLineage.length, icon: Users, color: 'text-rose-600', members: auntsLineage, isProbashi: false, subtitle: 'মেয়েদের পরিবারবর্গ' },
+    { title: 'ছেলেদের বউ', count: sonsWives.length, icon: Heart, color: 'text-amber-600', members: sonsWives, isProbashi: false, subtitle: '৪ ছেলের বউ' },
+    { title: 'মেয়েদের জামাই', count: daughtersHusbands.length, icon: Users, color: 'text-emerald-700', members: daughtersHusbands, isProbashi: false, subtitle: '৫ মেয়ের জামাই' },
+    { title: 'নাতি/নাত্নির বউ/জামাই', count: grandchildrenSpouses.length, icon: Heart, color: 'text-purple-600', members: grandchildrenSpouses, isProbashi: false },
+    { title: 'শিশু', count: childrenMembers.length, icon: Baby, color: 'text-amber-500', members: childrenMembers, isProbashi: false, subtitle: '৮ বছরের কম' },
+    { title: lang === 'bn' ? 'দাদা-দাদি' : 'Grandparents', count: grandpas.length + grandmas.length, icon: User, color: 'text-indigo-600', members: [...grandpas, ...grandmas], isProbashi: false },
+    { title: lang === 'bn' ? 'ছেলে' : 'Sons', count: sons.length, icon: User, color: 'text-blue-500', members: sons, isProbashi: false },
+    { title: lang === 'bn' ? 'মেয়ে' : 'Daughters', count: daughters.length, icon: User, color: 'text-pink-500', members: daughters, isProbashi: false },
+    { title: lang === 'bn' ? 'প্রবাসী' : 'Living Abroad', count: probashiMembers.length, icon: Globe, color: 'text-emerald-600', members: probashiMembers, isProbashi: true },
+    { title: lang === 'bn' ? 'স্ত্রী/স্বামী' : 'Spouses', count: members.filter(m => m.type === 'spouse').length, icon: Heart, color: 'text-red-500', members: members.filter(m => m.type === 'spouse'), isProbashi: false },
+    { title: lang === 'bn' ? 'নাতি-নাতনি' : 'Grandchildren', count: members.filter(m => m.type === 'grandchild').length, icon: Baby, color: 'text-green-500', members: members.filter(m => m.type === 'grandchild'), isProbashi: false },
+    { title: lang === 'bn' ? 'নাতি-নাতনির সন্তান' : 'Great-Grandchildren', count: members.filter(m => m.type === 'great-grandchild' || m.type === 'great-great-grandchild').length, icon: Baby, color: 'text-teal-500', members: members.filter(m => m.type === 'great-grandchild' || m.type === 'great-great-grandchild'), isProbashi: false },
+    { title: lang === 'bn' ? 'পুরুষ' : 'Male', count: members.filter(m => m.gender === 'male').length, icon: User, color: 'text-sky-600', members: members.filter(m => m.gender === 'male'), isProbashi: false },
+    { title: lang === 'bn' ? 'মহিলা' : 'Female', count: members.filter(m => m.gender === 'female').length, icon: User, color: 'text-rose-500', members: members.filter(m => m.gender === 'female'), isProbashi: false }
+  ], [members, grandpas, grandmas, sons, daughters, probashiMembers, sonsWives, daughtersHusbands, grandchildrenSpouses, ourLineage, auntsLineage, childrenMembers, lang]);
 
   const rootFamilies = useMemo(() => {
     return members
@@ -268,6 +331,9 @@ export default function Statistics() {
                 </div>
                 <span className="text-3xl sm:text-4xl font-bold text-[#1A3636] mb-1 font-serif">{stat.count}</span>
                 <span className="text-xs sm:text-sm text-[#736B65] font-medium text-center">{stat.title}</span>
+                {'subtitle' in stat && stat.subtitle && (
+                  <span className="text-[10px] text-[#C19A6B] font-semibold mt-0.5">{stat.subtitle}</span>
+                )}
               </motion.div>
             );
           })}
@@ -352,12 +418,14 @@ export default function Statistics() {
                           </div>
                           <h3 className="font-bold text-[#1A3636] text-sm mb-1">{m.name}</h3>
                           <div className="flex flex-col gap-1 items-center">
-                            <span className="text-[10px] bg-[#EAE6DF] text-[#736B65] px-2 py-0.5 rounded-full">
-                              {m.type === 'head' || m.type === 'grandpa' || m.type === 'grandma' ? 'দাদা-দাদি' : 
-                               m.type === 'son' ? 'ছেলে' : 
-                               m.type === 'daughter' ? 'মেয়ে' : 
-                               m.type === 'spouse' ? 'স্ত্রী/স্বামী' : 
-                               m.type === 'grandchild' ? 'নাতি/নাতনি' : 'পরবর্তী প্রজন্ম'}
+                            <span className="text-[10px] bg-[#EAE6DF] text-[#736B65] px-2.5 py-0.5 rounded-full font-medium">
+                              {m.role || (
+                                m.type === 'head' || m.type === 'grandpa' || m.type === 'grandma' ? 'দাদা-দাদি' : 
+                                m.type === 'son' ? 'ছেলে' : 
+                                m.type === 'daughter' ? 'মেয়ে' : 
+                                m.type === 'spouse' ? 'স্ত্রী/স্বামী' : 
+                                m.type === 'grandchild' ? 'নাতি/নাতনি' : 'পরবর্তী প্রজন্ম'
+                              )}
                             </span>
                             {m.currentlyLiveIn && (
                               <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">

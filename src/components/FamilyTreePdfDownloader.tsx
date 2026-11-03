@@ -57,6 +57,14 @@ export const FamilyTreePdfDownloader = forwardRef<FamilyTreePdfDownloaderRef, Fa
     const spouses = useMemo(() => members.filter(m => m.type === 'spouse'), [members]);
     const grandchildren = useMemo(() => members.filter(m => m.type === 'grandchild'), [members]);
     const greatGrandchildren = useMemo(() => members.filter(m => m.type === 'great-grandchild' || m.type === 'great-great-grandchild'), [members]);
+    const sonsWives = useMemo(() => members.filter(m => {
+      const isSpouseOfSon = sons.some(s => s.id === m.spouseId || s.spouseId === m.id);
+      return isSpouseOfSon || (m.role && (m.role.includes('পুত্রবধূ') || m.role.includes('ছেলের বউ')));
+    }), [members, sons]);
+    const daughtersHusbands = useMemo(() => members.filter(m => {
+      const isSpouseOfDaughter = daughters.some(d => d.id === m.spouseId || d.spouseId === m.id);
+      return isSpouseOfDaughter || (m.role && (m.role.includes('জামাই') || m.role.includes('মেয়ের জামাই')));
+    }), [members, daughters]);
 
     // Build orderly lineage for a branch root (son or daughter)
     const buildLineage = (root: Member): LineageNode => {
@@ -618,19 +626,19 @@ export const FamilyTreePdfDownloader = forwardRef<FamilyTreePdfDownloaderRef, Fa
               </div>
             </div>
 
-            {/* Sub-distribution row */}
-            <div className="grid grid-cols-4 gap-2.5 mt-3 text-center text-[11px] text-stone-200 border-t border-white/10 pt-2.5">
-              <div className="p-1.5 rounded-lg bg-black/20">
+            {/* Sub-distribution rows */}
+            <div className="grid grid-cols-4 gap-2 mt-2.5 text-center text-[10px] text-stone-200 border-t border-white/10 pt-2">
+              <div className="p-1 rounded bg-black/20">
                 দাদা-দাদি: <strong className="text-amber-200">{grandpas.length + grandmas.length} জন</strong>
               </div>
-              <div className="p-1.5 rounded-lg bg-black/20">
-                স্ত্রী ও স্বামী: <strong className="text-amber-200">{spouses.length} জন</strong>
+              <div className="p-1 rounded bg-black/20">
+                ছেলেদের বউ: <strong className="text-amber-200">{sonsWives.length} জন</strong>
               </div>
-              <div className="p-1.5 rounded-lg bg-black/20">
+              <div className="p-1 rounded bg-black/20">
+                মেয়েদের জামাই: <strong className="text-amber-200">{daughtersHusbands.length} জন</strong>
+              </div>
+              <div className="p-1 rounded bg-black/20">
                 নাতি-নাতনি: <strong className="text-amber-200">{grandchildren.length} জন</strong>
-              </div>
-              <div className="p-1.5 rounded-lg bg-black/20">
-                প্র-পৌত্র ও অন্যান্য: <strong className="text-amber-200">{greatGrandchildren.length} জন</strong>
               </div>
             </div>
           </div>
