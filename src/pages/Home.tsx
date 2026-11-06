@@ -80,10 +80,31 @@ export default function Home() {
     return members.filter(m => {
       const bday = parseBirthday(m.dob) || parseBirthday(m.birthYear);
       if (!bday) return false;
-      const status = getBirthdayWindowStatus(bday.day, bday.month, bday.year);
+      const status = getBirthdayWindowStatus(bday.day, bday.month, bday.year, 'birthday');
       return status !== null;
     }).length;
   }, [members]);
+
+  // Compute upcoming wedding anniversaries count in next 30 days
+  const upcomingAnniversaryCount = useMemo(() => {
+    const seenCouples = new Set<string>();
+    let count = 0;
+    members.forEach(m => {
+      const spouse = members.find(other => other.id !== m.id && (other.id === m.spouseId || other.spouseId === m.id));
+      const mDate = m.marriageDate || spouse?.marriageDate;
+      if (!mDate) return;
+      const key = [m.id, spouse?.id].filter(Boolean).sort().join('_');
+      if (seenCouples.has(key)) return;
+      seenCouples.add(key);
+      const parsed = parseBirthday(mDate);
+      if (!parsed) return;
+      const status = getBirthdayWindowStatus(parsed.day, parsed.month, parsed.year, 'anniversary');
+      if (status !== null) count++;
+    });
+    return count;
+  }, [members]);
+
+  const totalUpcomingEvents = upcomingCount + upcomingAnniversaryCount;
 
   // Filter search results across Bangla and English text (including English name)
   const searchResults = useMemo(() => {
@@ -363,15 +384,15 @@ export default function Home() {
             <span 
               className="text-[10px] min-[360px]:text-[11px] sm:text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-100 to-amber-300 drop-shadow-xs font-serif whitespace-nowrap"
             >
-              সামনে যাদের জন্মদিন
+              {upcomingAnniversaryCount > 0 ? 'জন্মদিন ও বিবাহবার্ষিকী' : 'সামনে যাদের জন্মদিন'}
             </span>
             <span className="flex h-1.5 w-1.5 sm:h-2 sm:w-2 relative shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-gradient-to-tr from-emerald-500 to-teal-300 shadow-[0_0_6px_#10b981]"></span>
             </span>
-            {upcomingCount > 0 && (
+            {totalUpcomingEvents > 0 && (
               <span className="bg-gradient-to-r from-amber-400 to-amber-300 text-stone-950 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded-full font-mono shadow-xs shrink-0">
-                {upcomingCount}
+                {totalUpcomingEvents}
               </span>
             )}
           </motion.button>
@@ -408,7 +429,7 @@ export default function Home() {
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-gradient-to-tr from-amber-400 to-yellow-200 shadow-[0_0_6px_#f59e0b]"></span>
             </span>
             <span className="bg-gradient-to-r from-amber-400 to-amber-300 text-stone-950 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded-full font-mono shadow-xs shrink-0">
-              ৪টি গেম
+              ৫টি গেম
             </span>
           </motion.button>
         </div>

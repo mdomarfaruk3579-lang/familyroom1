@@ -18,6 +18,7 @@ export interface Member {
   isDeceased?: boolean; // মৃত / মরহুম
   isChild?: boolean; // শিশু
   childAgeCategory?: string; // e.g. '৮ বছরের কম'
+  marriageDate?: string; // dd/mm/yyyy
   fatherId?: string | null;
   fatherName?: string;
   motherId?: string | null;

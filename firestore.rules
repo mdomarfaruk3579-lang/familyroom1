@@ -14,7 +14,7 @@ service cloud.firestore {
     }
     
     function isValidMember(data) {
-      let allowedFields = ['name', 'nameEn', 'role', 'type', 'order', 'birthYear', 'deathYear', 'bio', 'photoUrl', 'parentId', 'spouseId', 'gender', 'gallery', 'createdAt', 'dob', 'phone', 'email', 'socialLinks', 'timeline', 'timelineEnded', 'currentlyLiveIn', 'maritalStatus', 'fatherId', 'fatherName', 'motherId', 'motherName', 'isDeceased', 'isChild', 'childAgeCategory'];
+      let allowedFields = ['name', 'nameEn', 'role', 'type', 'order', 'birthYear', 'deathYear', 'bio', 'photoUrl', 'parentId', 'spouseId', 'gender', 'gallery', 'createdAt', 'dob', 'phone', 'email', 'socialLinks', 'timeline', 'timelineEnded', 'currentlyLiveIn', 'maritalStatus', 'fatherId', 'fatherName', 'motherId', 'motherName', 'isDeceased', 'isChild', 'childAgeCategory', 'marriageDate'];
       return data.keys().hasOnly(allowedFields) &&
              data.keys().hasAll(['name', 'role', 'type', 'order']) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
@@ -27,6 +27,7 @@ service cloud.firestore {
              (!('isDeceased' in data) || data.isDeceased is bool) &&
              (!('isChild' in data) || data.isChild is bool) &&
              (!('childAgeCategory' in data) || (data.childAgeCategory is string && data.childAgeCategory.size() <= 50)) &&
+             (!('marriageDate' in data) || (data.marriageDate is string && data.marriageDate.size() <= 30)) &&
              (!('dob' in data) || (data.dob is string && data.dob.size() <= 30)) &&
              (!('currentlyLiveIn' in data) || (data.currentlyLiveIn is string && data.currentlyLiveIn.size() <= 100)) &&
              (!('maritalStatus' in data) || (data.maritalStatus is string && data.maritalStatus.size() <= 50)) &&

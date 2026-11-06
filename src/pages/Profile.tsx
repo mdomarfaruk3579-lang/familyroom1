@@ -230,11 +230,18 @@ export default function Profile() {
                 </div>
               )}
 
-              {/* Marital Status */}
+              {/* Marital Status & Marriage Date */}
               {member.maritalStatus && (
                 <div className="flex items-center gap-1.5 font-medium text-stone-800 text-xs sm:text-sm">
                   <Heart className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                   <span>বৈবাহিক অবস্থা: <strong>{member.maritalStatus}</strong></span>
+                </div>
+              )}
+
+              {member.marriageDate && (
+                <div className="flex items-center gap-1.5 font-medium text-rose-900 bg-rose-50/80 border border-rose-200/80 px-3 py-1 rounded-full text-xs w-fit">
+                  <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 shrink-0" />
+                  <span>বিবাহের তারিখ: <strong className="font-mono">{member.marriageDate}</strong></span>
                 </div>
               )}
 

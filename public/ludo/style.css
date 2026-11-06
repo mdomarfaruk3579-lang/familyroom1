@@ -1,0 +1,864 @@
+/* ==========================================================================
+   LUDO ROYALE - Mobile-First Modern Theme & Styles
+   Zero external CSS frameworks. 100% vanilla CSS with CSS variables.
+   ========================================================================== */
+
+:root {
+  /* Brand / Neutral Colors */
+  --bg-gradient-start: #1e1145;
+  --bg-gradient-end: #0f0728;
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --card-border: rgba(255, 255, 255, 0.25);
+  --text-main: #1e1e2f;
+  --text-muted: #64748b;
+  --text-inverse: #ffffff;
+  --surface-overlay: rgba(15, 7, 40, 0.85);
+  --shadow-color: rgba(0, 0, 0, 0.25);
+
+  /* Player Colors (6-Arm Palette with Rich Glossy Gradients) */
+  --p-red: #ef4444;
+  --p-red-light: #fca5a5;
+  --p-red-dark: #b91c1c;
+
+  --p-green: #10b981;
+  --p-green-light: #6ee7b7;
+  --p-green-dark: #047857;
+
+  --p-yellow: #f59e0b;
+  --p-yellow-light: #fde68a;
+  --p-yellow-dark: #b45309;
+
+  --p-blue: #3b82f6;
+  --p-blue-light: #93c5fd;
+  --p-blue-dark: #1d4ed8;
+
+  --p-purple: #a855f7;
+  --p-purple-light: #d8b4fe;
+  --p-purple-dark: #7e22ce;
+
+  --p-orange: #f97316;
+  --p-orange-light: #fdba74;
+  --p-orange-dark: #c2410c;
+
+  /* Accent & Gold */
+  --gold: #fbbf24;
+  --gold-glow: rgba(251, 191, 36, 0.5);
+
+  /* Geometry & Fonts */
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 10px;
+  --font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Fredoka', 'Baloo 2', system-ui, -apple-system, sans-serif;
+}
+
+/* Light Theme Variables */
+[data-theme="light"] {
+  --bg-gradient-start: #f1f5f9;
+  --bg-gradient-end: #cbd5e1;
+  --card-bg: rgba(255, 255, 255, 0.98);
+  --card-border: rgba(0, 0, 0, 0.1);
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-inverse: #ffffff;
+  --surface-overlay: rgba(15, 23, 42, 0.7);
+  --shadow-color: rgba(0, 0, 0, 0.12);
+}
+
+/* Base Reset & Box Sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-family);
+  user-select: none;
+  -webkit-user-select: none;
+  background: radial-gradient(circle at 50% 20%, var(--bg-gradient-start), var(--bg-gradient-end));
+  color: var(--text-main);
+}
+
+#app-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   SCREENS & TRANSITIONS
+   ========================================================================== */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.96);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.screen.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+  z-index: 20;
+}
+
+/* ==========================================================================
+   1. SPLASH SCREEN
+   ========================================================================== */
+#screen-splash {
+  background: radial-gradient(circle at 50% 30%, #2e1065, #0f0728);
+}
+
+.splash-logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.splash-dice-icon {
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, #ffffff, #f1f5f9);
+  border-radius: 24px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 14px;
+  animation: splashBounce 1.5s infinite ease-in-out;
+}
+
+.splash-pip {
+  width: 14px;
+  height: 14px;
+  background: var(--p-red);
+  border-radius: 50%;
+  align-self: center;
+  justify-self: center;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.splash-title {
+  font-size: 38px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 1px;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.splash-subtitle {
+  font-size: 14px;
+  color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.splash-loader-bar {
+  width: 200px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-top: 24px;
+}
+
+.splash-loader-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--p-yellow), var(--p-orange));
+  border-radius: var(--radius-pill);
+  transition: width 0.8s ease;
+}
+
+@keyframes splashBounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(8deg); }
+}
+
+/* ==========================================================================
+   2. HOME MENU SCREEN
+   ========================================================================== */
+.home-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  box-shadow: 0 20px 45px var(--shadow-color);
+  border: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  backdrop-filter: blur(16px);
+}
+
+.home-header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.home-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(251, 191, 36, 0.18);
+  border: 1px solid var(--gold);
+  color: #b45309;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  margin-bottom: 8px;
+}
+
+.home-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1e1145;
+  line-height: 1.1;
+}
+
+.home-menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Modern Pill Buttons */
+.btn {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #1e1145;
+  border: 1px solid #fbbf24;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #ffffff;
+}
+
+.btn-outline {
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  color: #334155;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+}
+
+.home-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  color: #334155;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.icon-btn:active {
+  transform: scale(0.92);
+}
+
+/* ==========================================================================
+   3. GAME SETUP SCREEN
+   ========================================================================== */
+.setup-card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: 0 20px 45px var(--shadow-color);
+  border: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.setup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.setup-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1e1145;
+}
+
+.player-count-chips {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 6px 0;
+}
+
+.chip-btn {
+  flex: 1;
+  height: 42px;
+  border-radius: var(--radius-md);
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip-btn.active {
+  background: #1e1145;
+  color: #ffffff;
+  border-color: #1e1145;
+  box-shadow: 0 4px 10px rgba(30, 17, 69, 0.3);
+}
+
+.seats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.seat-row.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.seat-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.seat-avatar-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.seat-name-input {
+  flex: 1;
+  min-width: 80px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #cbd5e1;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.seat-type-select, .seat-diff-select {
+  height: 38px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #cbd5e1;
+  padding: 0 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+}
+
+/* Accordion for Rules */
+.rules-details {
+  border-radius: var(--radius-md);
+  background: #f1f5f9;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.rules-summary {
+  font-weight: 700;
+  cursor: pointer;
+  color: #1e1145;
+}
+
+.rule-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dashed #cbd5e1;
+}
+
+.rule-toggle-row:last-child {
+  border-bottom: none;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #cbd5e1;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.slider::before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .slider {
+  background-color: var(--p-green);
+}
+
+input:checked + .slider::before {
+  transform: translateX(20px);
+}
+
+/* ==========================================================================
+   4. GAME BOARD SCREEN (6-ARM HEXAGONAL BOARD)
+   ========================================================================== */
+#screen-game {
+  padding: 0;
+  justify-content: flex-start;
+}
+
+/* Top In-Game Bar */
+.game-top-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(15, 7, 40, 0.7);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 30;
+}
+
+.turn-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 4px 14px 4px 6px;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.turn-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.turn-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.turn-name {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.turn-desc {
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* Board Viewport & SVG Container */
+.board-viewport {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+.board-container {
+  width: 100%;
+  max-width: 680px;
+  max-height: 78vh;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 8px;
+  transition: transform 0.2s ease-out;
+}
+
+#ludo-board-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.45));
+}
+
+/* Floating Bottom Control Panel (Dice & Actions) */
+.game-bottom-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px 16px;
+  background: linear-gradient(180deg, transparent, rgba(15, 7, 40, 0.95));
+  z-index: 30;
+  position: relative;
+}
+
+.dice-tray {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* 3D Modern Glossy Dice */
+.ludo-dice-3d {
+  width: 60px;
+  height: 60px;
+  position: relative;
+  perspective: 600px;
+  cursor: pointer;
+}
+
+.dice-cube {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.dice-face {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(145deg, #ffffff, #f1f5f9);
+  border-radius: 14px;
+  border: 2px solid #cbd5e1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 8px;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.9), inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+  backface-hidden: hidden;
+}
+
+.dice-pip {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0f172a;
+  align-self: center;
+  justify-self: center;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.dice-pip.red {
+  background: var(--p-red);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 6px rgba(239, 68, 68, 0.5);
+}
+
+.dice-face.face-1 { transform: rotateY(0deg) translateZ(30px); }
+.dice-face.face-2 { transform: rotateX(-90deg) translateZ(30px); }
+.dice-face.face-3 { transform: rotateY(90deg) translateZ(30px); }
+.dice-face.face-4 { transform: rotateY(-90deg) translateZ(30px); }
+.dice-face.face-5 { transform: rotateX(90deg) translateZ(30px); }
+.dice-face.face-6 { transform: rotateX(180deg) translateZ(30px); }
+
+/* Rolling physics animation */
+.dice-cube.rolling {
+  animation: diceRollAnim 0.7s infinite linear;
+}
+
+@keyframes diceRollAnim {
+  0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+  50% { transform: rotateX(360deg) rotateY(540deg) rotateZ(180deg); }
+  100% { transform: rotateX(720deg) rotateY(1080deg) rotateZ(360deg); }
+}
+
+.dice-prompt-text {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Toast Message Overlay */
+.toast-banner {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(15, 7, 40, 0.9);
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-pill);
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 50;
+  white-space: nowrap;
+}
+
+.toast-banner.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================================
+   5. MODALS (Winner, Pause, How to Play, Settings)
+   ========================================================================== */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--surface-overlay);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 100;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  border: 1.5px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Winner Podium */
+.winner-trophy-icon {
+  font-size: 54px;
+  text-align: center;
+  margin-bottom: 4px;
+  animation: trophyShine 1.5s infinite ease-in-out;
+}
+
+@keyframes trophyShine {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.1) rotate(5deg); }
+}
+
+.rankings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.ranking-badge {
+  font-weight: 800;
+  font-size: 14px;
+  color: #1e1145;
+  width: 32px;
+}
+
+.ranking-badge.first { color: #f59e0b; }
+.ranking-badge.second { color: #64748b; }
+.ranking-badge.third { color: #b45309; }
+
+/* SVG Pawns & Board Animations */
+.ludo-pawn {
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.ludo-pawn:hover {
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.9));
+}
+
+.ludo-pawn.movable {
+  animation: pawnGlow 1.2s infinite ease-in-out;
+}
+
+@keyframes pawnGlow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px var(--gold));
+  }
+  50% {
+    transform: scale(1.18);
+    filter: drop-shadow(0 0 10px var(--gold));
+  }
+}
+
+/* Canvas Confetti */
+#confetti-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 120;
+}
+
+/* Accessibility & Colorblind Mark */
+.colorblind-mark {
+  font-size: 11px;
+  font-weight: 800;
+  fill: #ffffff;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

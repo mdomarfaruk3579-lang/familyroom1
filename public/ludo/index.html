@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes" />
+  <title>Ludo Royale - 2 to 6 Player Hexagonal Ludo</title>
+  <meta name="description" content="A complete, polished, responsive 2 to 6 player Ludo game with 3D dice, smart AI, and hexagonal board." />
+  
+  <!-- Premium Rounded Bengali Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Game Styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app-container">
+    
+    <!-- Canvas for Winner Confetti Celebration -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Floating Toast Notification -->
+    <div id="toast-banner" class="toast-banner" role="status" aria-live="polite"></div>
+
+    <!-- ======================================================================
+         1. SCREEN: SPLASH & LOADING
+         ====================================================================== -->
+    <div id="screen-splash" class="screen active">
+      <div class="splash-logo-container">
+        <div class="splash-dice-icon" aria-hidden="true">
+          <div></div><div></div><div class="splash-pip"></div>
+          <div></div><div class="splash-pip"></div><div></div>
+          <div class="splash-pip"></div><div></div><div></div>
+        </div>
+        <h1 class="splash-title" data-i18n="gameTitle">লুডু রয়্যাল</h1>
+        <p class="splash-subtitle" data-i18n="subtitle">৬ জনের ষড়ভুজ লুডু বোর্ড</p>
+        <div class="splash-loader-bar">
+          <div id="splash-loader-fill" class="splash-loader-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         2. SCREEN: HOME MENU
+         ====================================================================== -->
+    <div id="screen-home" class="screen">
+      <div class="home-card">
+        <div class="home-header">
+          <span class="home-badge">✦ ROYALE EDITION ✦</span>
+          <h2 class="home-title" data-i18n="gameTitle">লুডু রয়্যাল</h2>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;" data-i18n="subtitle">
+            ৬ জনের ষড়ভুজ লুডু বোর্ড
+          </p>
+        </div>
+
+        <div class="home-menu-buttons">
+          <button id="btn-play-ai" class="btn btn-primary" type="button">
+            <span style="font-size: 20px;">🤖</span>
+            <span data-i18n="playVsAi">কম্পিউটারের সাথে খেলুন</span>
+          </button>
+
+          <button id="btn-play-friends" class="btn btn-secondary" type="button">
+            <span style="font-size: 20px;">👥</span>
+            <span data-i18n="passAndPlay">বন্ধুদের সাথে খেলুন</span>
+          </button>
+
+          <button id="btn-continue-game" class="btn btn-accent" type="button" style="display: none;">
+            <span style="font-size: 20px;">▶️</span>
+            <span data-i18n="continueGame">খেলা চালিয়ে যান</span>
+          </button>
+        </div>
+
+        <div class="home-bottom-row">
+          <button id="btn-how-to-play" class="btn btn-outline" style="width: auto; flex: 1; margin-right: 8px;" type="button">
+            <span>📖</span>
+            <span data-i18n="howToPlay">খেলার নিয়মাবলী</span>
+          </button>
+
+          <button id="btn-settings" class="icon-btn" type="button" title="Settings" aria-label="Settings">
+            ⚙️
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         3. SCREEN: GAME SETUP (2-6 SEATS & RULES)
+         ====================================================================== -->
+    <div id="screen-setup" class="screen">
+      <div class="setup-card">
+        <div class="setup-header">
+          <button id="btn-setup-back" class="icon-btn" type="button" title="Back" aria-label="Back">
+            ←
+          </button>
+          <h3 class="setup-title" data-i18n="setupTitle">খেলোয়াড় নির্বাচন</h3>
+          <div style="width: 44px;"></div>
+        </div>
+
+        <!-- 2 to 6 Players Chips -->
+        <div>
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;" data-i18n="playerCount">
+            খেলোয়াড় সংখ্যা
+          </label>
+          <div id="player-count-chips" class="player-count-chips"></div>
+        </div>
+
+        <!-- Seats Configuration List -->
+        <div id="seats-list" class="seats-list"></div>
+
+        <!-- Custom Rule Options Accordion -->
+        <details class="rules-details">
+          <summary class="rules-summary" data-i18n="rulesTitle">খেলার কাস্টম নিয়ম</summary>
+          <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+            <div class="rule-toggle-row">
+              <span data-i18n="ruleSixExit">ঘর থেকে বের হতে ৬ লাগবে</span>
+              <label class="switch">
+                <input type="checkbox" id="rule-six-exit" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="rule-toggle-row">
+              <span data-i18n="ruleTripleSix">টানা ৩টি ছক্কায় চাল বাতিল</span>
+              <label class="switch">
+                <input type="checkbox" id="rule-triple-six" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="rule-toggle-row">
+              <span data-i18n="ruleBlockades">একই রঙের ঘুঁটিতে ব্লকেড</span>
+              <label class="switch">
+                <input type="checkbox" id="rule-blockades" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="rule-toggle-row">
+              <span data-i18n="ruleAutoMove">১টি চাল থাকলে স্বয়ংক্রিয় চাল</span>
+              <label class="switch">
+                <input type="checkbox" id="rule-auto-move" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </details>
+
+        <!-- Start Game Button -->
+        <button id="btn-setup-start" class="btn btn-primary" type="button" style="margin-top: 6px;">
+          <span>🎲</span>
+          <span data-i18n="startBtn">খেলা শুরু করুন</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         4. SCREEN: GAME BOARD VIEWPORT
+         ====================================================================== -->
+    <div id="screen-game" class="screen">
+      
+      <!-- Top In-Game Bar -->
+      <div class="game-top-bar">
+        <button id="btn-pause" class="icon-btn" type="button" title="Pause" aria-label="Pause Menu">
+          ⏸️
+        </button>
+
+        <!-- Active Turn Info -->
+        <div class="turn-pill">
+          <div id="turn-avatar" class="turn-avatar">👑</div>
+          <div class="turn-info">
+            <span id="turn-name" class="turn-name">Player 1</span>
+            <span id="turn-desc" class="turn-desc">Your Turn</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 6px;">
+          <button id="btn-zoom-in" class="icon-btn" type="button" title="Zoom In">+</button>
+          <button id="btn-zoom-out" class="icon-btn" type="button" title="Zoom Out">−</button>
+          <button id="btn-quick-mute" class="icon-btn" type="button" title="Sound Toggle">🔊</button>
+        </div>
+      </div>
+
+      <!-- Hexagonal 6-Arm Board Viewport -->
+      <div id="board-viewport" class="board-viewport">
+        <div id="board-container" class="board-container">
+          <!-- Scalable SVG Board injected programmatically here -->
+        </div>
+      </div>
+
+      <!-- Bottom Floating 3D Dice Tray -->
+      <div class="game-bottom-bar">
+        <div class="dice-tray">
+          <div id="ludo-dice-container" class="ludo-dice-3d" title="Click or press Spacebar to roll">
+            <div id="ludo-dice-cube" class="dice-cube">
+              <!-- Face 1 -->
+              <div class="dice-face face-1">
+                <div></div><div></div><div></div>
+                <div></div><div class="dice-pip red"></div><div></div>
+                <div></div><div></div><div></div>
+              </div>
+              <!-- Face 2 -->
+              <div class="dice-face face-2">
+                <div class="dice-pip"></div><div></div><div></div>
+                <div></div><div></div><div></div>
+                <div></div><div></div><div class="dice-pip"></div>
+              </div>
+              <!-- Face 3 -->
+              <div class="dice-face face-3">
+                <div class="dice-pip"></div><div></div><div></div>
+                <div></div><div class="dice-pip"></div><div></div>
+                <div></div><div></div><div class="dice-pip"></div>
+              </div>
+              <!-- Face 4 -->
+              <div class="dice-face face-4">
+                <div class="dice-pip red"></div><div></div><div class="dice-pip red"></div>
+                <div></div><div></div><div></div>
+                <div class="dice-pip red"></div><div></div><div class="dice-pip red"></div>
+              </div>
+              <!-- Face 5 -->
+              <div class="dice-face face-5">
+                <div class="dice-pip"></div><div></div><div class="dice-pip"></div>
+                <div></div><div class="dice-pip"></div><div></div>
+                <div class="dice-pip"></div><div></div><div class="dice-pip"></div>
+              </div>
+              <!-- Face 6 -->
+              <div class="dice-face face-6">
+                <div class="dice-pip"></div><div></div><div class="dice-pip"></div>
+                <div></div><div></div><div></div>
+                <div class="dice-pip"></div><div></div><div class="dice-pip"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="dice-prompt-text" class="dice-prompt-text" data-i18n="rollPrompt">
+            ছক্কা ছুঁড়ুন
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================================
+         5. MODAL: WINNER SCREEN
+         ====================================================================== -->
+    <div id="modal-winner" class="modal-overlay">
+      <div class="modal-card" style="text-align: center;">
+        <div class="winner-trophy-icon">🏆</div>
+        <h2 style="font-size: 26px; font-weight: 800; color: #1e1145;" data-i18n="winnerTitle">
+          বিজয়ের মহা আনন্দ!
+        </h2>
+        <p style="font-size: 13px; color: var(--text-muted);">
+          ৬ জনের ষড়ভুজ বোর্ডে দুর্দান্ত লড়াই সম্পন্ন হয়েছে!
+        </p>
+
+        <!-- Final Rankings List -->
+        <div id="winner-rankings-list" class="rankings-list"></div>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button id="btn-winner-replay" class="btn btn-primary" type="button" style="flex: 1;">
+            <span data-i18n="playAgain">আবার খেলুন</span>
+          </button>
+          <button id="btn-winner-home" class="btn btn-outline" type="button" style="flex: 1;">
+            <span data-i18n="homeBtn">মেনু পেজ</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         6. MODAL: PAUSE MENU
+         ====================================================================== -->
+    <div id="modal-pause" class="modal-overlay">
+      <div class="modal-card">
+        <h3 style="font-size: 20px; font-weight: 800; text-align: center; color: #1e1145;" data-i18n="pauseTitle">
+          খেলা স্থগিত
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin: 10px 0;">
+          <button id="btn-pause-resume" class="btn btn-primary" type="button">
+            <span data-i18n="resume">চালিয়ে যান</span>
+          </button>
+          <button id="btn-pause-restart" class="btn btn-outline" type="button">
+            <span data-i18n="restart">নতুন করে শুরু</span>
+          </button>
+          <button id="btn-pause-quit" class="btn btn-danger" type="button">
+            <span data-i18n="quit">মেনুতে ফিরুন</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         7. MODAL: HOW TO PLAY RULES
+         ====================================================================== -->
+    <div id="modal-howtoplay" class="modal-overlay">
+      <div class="modal-card">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <h3 style="font-size: 18px; font-weight: 800; color: #1e1145;" data-i18n="howToPlay">
+            খেলার নিয়মাবলী
+          </h3>
+          <button class="btn-modal-close icon-btn" type="button">✕</button>
+        </div>
+
+        <div style="font-size: 13px; color: #334155; line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
+          <p><strong>১. ঘুঁটি বের করা:</strong> ছক্কায় ৬ পড়লেই কেবল ঘর (Base) থেকে ঘুঁটি মাঠে নামানো যায়।</p>
+          <p><strong>২. বাড়তি চাল:</strong> ৬ পড়লে বা বিপক্ষের ঘুঁটি কাটলে অথবা ঘুঁটি হোমে পৌঁছালে আরেকটি বাড়তি চাল পাওয়া যায়।</p>
+          <p><strong>৩. নিরাপদ ঘর:</strong> প্রতিটি তারকার চিহ্ন (★) এবং শুরুর ঘর নিরাপদ। সেখানে কাউকে কাটা যায় না।</p>
+          <p><strong>৪. বিজয়:</strong> ৪টি ঘুঁটি সবার আগে সেন্ট্রাল হোমে নিয়ে পৌঁছালেই চ্যাম্পিয়ন!</p>
+        </div>
+
+        <button class="btn btn-primary btn-modal-close" type="button" style="margin-top: 8px;">
+          ঠিক আছে
+        </button>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         8. MODAL: SETTINGS
+         ====================================================================== -->
+    <div id="modal-settings" class="modal-overlay">
+      <div class="modal-card">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <h3 style="font-size: 18px; font-weight: 800; color: #1e1145;" data-i18n="settings">
+            সেটিংস
+          </h3>
+          <button class="btn-modal-close icon-btn" type="button">✕</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+          <div class="rule-toggle-row">
+            <span data-i18n="sound">শব্দ</span>
+            <label class="switch">
+              <input type="checkbox" id="toggle-sound" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="rule-toggle-row">
+            <span data-i18n="vibration">ভাইব্রেশন</span>
+            <label class="switch">
+              <input type="checkbox" id="toggle-vibrate" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="rule-toggle-row">
+            <span data-i18n="colorblind">কালারব্লাইন্ড চিহ্ন</span>
+            <label class="switch">
+              <input type="checkbox" id="toggle-colorblind" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="rule-toggle-row">
+            <span data-i18n="theme">লাইট থিম</span>
+            <label class="switch">
+              <input type="checkbox" id="toggle-theme" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="rule-toggle-row">
+            <span data-i18n="lang">ভাষা</span>
+            <select id="select-lang" style="padding: 4px 8px; border-radius: 6px; font-family: inherit;">
+              <option value="bn">বাংলা</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-modal-close" type="button" style="margin-top: 8px;">
+          সংরক্ষণ করুন
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Game Logic Script -->
+  <script src="game.js"></script>
+</body>
+</html>

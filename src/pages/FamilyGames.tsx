@@ -10,14 +10,15 @@ import { RelationQuizGame } from '../components/games/RelationQuizGame';
 import { FamilyTreePuzzleGame } from '../components/games/FamilyTreePuzzleGame';
 import { PhotoGuessGame } from '../components/games/PhotoGuessGame';
 import { FamilyRunnerGame } from '../components/games/runner/FamilyRunnerGame';
+import { FamilyLudoGame } from '../components/games/ludo/FamilyLudoGame';
 
-type ActiveGame = 'menu' | 'quiz' | 'puzzle' | 'photo' | 'runner';
+type ActiveGame = 'menu' | 'quiz' | 'puzzle' | 'photo' | 'runner' | 'ludo';
 
 export default function FamilyGames() {
   const [searchParams, setSearchParams] = useSearchParams();
   const gameParam = searchParams.get('play') as ActiveGame | null;
   const activeGame: ActiveGame = 
-    gameParam === 'quiz' || gameParam === 'puzzle' || gameParam === 'photo' || gameParam === 'runner' 
+    gameParam === 'quiz' || gameParam === 'puzzle' || gameParam === 'photo' || gameParam === 'runner' || gameParam === 'ludo'
       ? gameParam 
       : 'menu';
 
@@ -262,6 +263,53 @@ export default function FamilyGames() {
                 </div>
               </motion.div>
 
+              {/* Card 5: ফ্যামিলি লুডু (Classic & Snakes & Ladders, 2-6 players & AI) */}
+              <motion.div
+                whileHover={{ scale: 1.025, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-gradient-to-br from-[#FAF9F6] to-[#F5EFEB] border-2 border-emerald-600/70 rounded-3xl p-5 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group relative overflow-hidden md:col-span-2"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-800 to-teal-700 text-amber-300 flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition-transform">
+                      🎲
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold bg-amber-400 text-stone-950 px-2.5 py-1 rounded-full shadow-xs uppercase tracking-wider">
+                        ২-৬ জন ও কম্পিউটার
+                      </span>
+                      <span className="text-[10px] font-bold bg-emerald-700 text-white px-2.5 py-1 rounded-full shadow-xs">
+                        সাপ লুডু সহ
+                      </span>
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#1A3636] mb-2 group-hover:text-[#40534C] transition-colors flex items-center gap-2">
+                    <span>ফ্যামিলি লুডু</span>
+                    <span className="text-xs font-mono font-normal text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">Classic & Snakes</span>
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-[#40534C] font-light leading-relaxed mb-5 max-w-2xl">
+                    পরিবারের ২ থেকে ৬ জন সদস্য বা রোবট কম্পিউটারের সাথে ক্লাসিক লুডু ও ঐতিহ্যবাহী ১০০ ঘরের সাপ লুডু খেলুন। পাশা ঘোরান, ঘুঁটি চালান এবং পারিবারিক গুণ ও মই বেয়ে সবার আগে বিজয়ী হোন!
+                  </p>
+                </div>
+
+                <div className="pt-3.5 border-t border-[#D6BD98]/40 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800">
+                    <span>🎲 ক্লাসিক ৪ ঘুঁটি</span>
+                    <span>•</span>
+                    <span>🐍 সাপ ও পারিবারিক মই</span>
+                  </div>
+                  <button
+                    onClick={() => setGame('ludo')}
+                    className="inline-flex items-center gap-1.5 bg-[#1A3636] hover:bg-[#40534C] text-white font-bold text-xs px-5 py-2 rounded-full shadow-md group-hover:shadow-lg transition cursor-pointer"
+                  >
+                    <span>খেলুন</span>
+                    <Play className="w-3 h-3 fill-white" />
+                  </button>
+                </div>
+              </motion.div>
+
             </div>
           </motion.div>
         )}
@@ -301,6 +349,16 @@ export default function FamilyGames() {
         {/* ------------------------------------------------------------- */}
         {activeGame === 'puzzle' && (
           <FamilyTreePuzzleGame
+            members={members}
+            onBackToHub={() => setGame('menu')}
+          />
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* VIEW 6: GAME 5 - ফ্যামিলি লুডু (Classic & Snakes) */}
+        {/* ------------------------------------------------------------- */}
+        {activeGame === 'ludo' && (
+          <FamilyLudoGame
             members={members}
             onBackToHub={() => setGame('menu')}
           />

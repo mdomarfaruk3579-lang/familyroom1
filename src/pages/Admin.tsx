@@ -171,6 +171,7 @@ export default function Admin() {
       if (memberData.isDeceased !== undefined) dataToSave.isDeceased = Boolean(memberData.isDeceased);
       if (memberData.isChild !== undefined) dataToSave.isChild = Boolean(memberData.isChild);
       if (memberData.childAgeCategory) dataToSave.childAgeCategory = memberData.childAgeCategory.trim();
+      if (memberData.marriageDate) dataToSave.marriageDate = memberData.marriageDate.trim();
       if (memberData.deathYear) dataToSave.deathYear = memberData.deathYear.trim();
       if (memberData.phone) dataToSave.phone = memberData.phone.trim();
       if (memberData.email) dataToSave.email = memberData.email.trim();
@@ -578,6 +579,22 @@ export default function Admin() {
                     <option value="বাগদান সম্পন্ন">বাগদান সম্পন্ন (Engaged)</option>
                     <option value="অন্যান্য">অন্যান্য (Other)</option>
                   </select>
+                </div>
+
+                {/* Marriage Date (বিবাহের তারিখ) */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5 flex items-center gap-1.5">
+                    <Heart className="w-3.5 h-3.5 text-rose-500" />
+                    <span>marriage date - বিবাহের তারিখ</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="DD/MM/YYYY (e.g. 15/04/2012)"
+                    value={editingMember.marriageDate || ''} 
+                    onChange={e => setEditingMember({...editingMember, marriageDate: e.target.value})}
+                    className="w-full p-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#1A3636] outline-none bg-stone-50 text-sm font-mono"
+                  />
+                  <p className="text-[10px] text-stone-500 mt-1">সামনে যাদের বিবাহবার্ষিকী হিসাব করতে এই তারিখ ব্যবহৃত হবে</p>
                 </div>
 
                 {/* Father Selection Dropdown (পিতা নির্বাচন) */}
