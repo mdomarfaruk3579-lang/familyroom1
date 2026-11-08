@@ -72,3 +72,97 @@ body {
   /* Removed background-attachment: fixed because it causes massive scroll lag on mobile */
   background-size: 100% 100%, 100% 100%, 150px 150px;
 }
+
+/* ------------------------------------------------------------- */
+/* Deep Night Mode with Crystal Clear Contrast (No White on White) */
+/* ------------------------------------------------------------- */
+body.night-mode {
+  background-color: #070F1E !important;
+  color: #F8FAFC !important;
+}
+
+body.night-mode .bg-\[\#F7F5F0\],
+body.night-mode .bg-\[\#F7F3EA\],
+body.night-mode .bg-\[\#FAF9F6\],
+body.night-mode .bg-\[\#F5EFEB\] {
+  background-color: #0B1324 !important;
+}
+
+/* Card & container surfaces in night mode */
+body.night-mode .bg-white {
+  background-color: #132038 !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+body.night-mode .bg-stone-50,
+body.night-mode .bg-stone-100 {
+  background-color: #0E172A !important;
+  border-color: rgba(148, 163, 184, 0.2) !important;
+}
+
+/* Input boxes, textareas, and dropdowns */
+body.night-mode input,
+body.night-mode textarea,
+body.night-mode select {
+  background-color: #0A1120 !important;
+  color: #F8FAFC !important;
+  border-color: #334155 !important;
+}
+
+body.night-mode input::placeholder,
+body.night-mode textarea::placeholder {
+  color: #64748B !important;
+}
+
+/* Primary text headers in night mode */
+body.night-mode h1,
+body.night-mode h2,
+body.night-mode h3,
+body.night-mode h4,
+body.night-mode .text-\[\#1A3636\],
+body.night-mode .text-\[\#2A2421\],
+body.night-mode .text-\[\#1F2A28\],
+body.night-mode .text-stone-800,
+body.night-mode .text-stone-900 {
+  color: #F8FAFC !important;
+}
+
+/* Secondary body text */
+body.night-mode p,
+body.night-mode .text-\[\#40534C\],
+body.night-mode .text-stone-600,
+body.night-mode .text-stone-700 {
+  color: #CBD5E1 !important;
+}
+
+body.night-mode .text-stone-500,
+body.night-mode .text-\[\#736B65\] {
+  color: #94A3B8 !important;
+}
+
+/* Badges & Accent Pills */
+body.night-mode .bg-amber-100,
+body.night-mode .bg-\[\#D6BD98\]\/30,
+body.night-mode .bg-\[\#D6BD98\]\/40 {
+  background-color: rgba(217, 119, 6, 0.22) !important;
+  color: #FDE68A !important;
+  border-color: rgba(217, 119, 6, 0.35) !important;
+}
+
+body.night-mode .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #6EE7B7 !important;
+}
+
+body.night-mode .bg-sky-100 {
+  background-color: rgba(14, 165, 233, 0.2) !important;
+  color: #7DD3FC !important;
+}
+
+/* Borders */
+body.night-mode .border-stone-200,
+body.night-mode .border-\[\#D6BD98\]\/60,
+body.night-mode .border-\[\#D6BD98\],
+body.night-mode .border-\[\#D6BD98\]\/40 {
+  border-color: rgba(148, 163, 184, 0.25) !important;
+}

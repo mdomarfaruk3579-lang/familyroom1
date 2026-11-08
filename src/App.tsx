@@ -14,16 +14,20 @@ import FamilyGames from './pages/FamilyGames';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BackgroundAnimation from './components/BackgroundAnimation';
+import SeasonalAtmosphere from './components/SeasonalAtmosphere';
+import { SeasonProvider } from './context/SeasonContext';
 import { OfflineIndicator } from './components/OfflineIndicator';
 
 export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <Router>
-          <div className="min-h-screen bg-[#F7F5F0] text-[#2A2421] font-sans relative flex flex-col transition-colors duration-300">
-            <BackgroundAnimation />
-            <Navbar />
+        <SeasonProvider>
+          <Router>
+            <div className="min-h-screen bg-[#F7F5F0] text-[#2A2421] font-sans relative flex flex-col transition-colors duration-300">
+              <BackgroundAnimation />
+              <SeasonalAtmosphere />
+              <Navbar />
             <main className="flex-grow p-3 sm:p-4 md:p-8 relative z-10">
               <Routes>
                 <Route path="/" element={<Home />} />
@@ -43,6 +47,7 @@ export default function App() {
             <OfflineIndicator />
           </div>
         </Router>
+        </SeasonProvider>
       </AuthProvider>
     </LanguageProvider>
   );

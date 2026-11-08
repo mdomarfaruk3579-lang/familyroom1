@@ -11,14 +11,15 @@ import { FamilyTreePuzzleGame } from '../components/games/FamilyTreePuzzleGame';
 import { PhotoGuessGame } from '../components/games/PhotoGuessGame';
 import { FamilyRunnerGame } from '../components/games/runner/FamilyRunnerGame';
 import { FamilyLudoGame } from '../components/games/ludo/FamilyLudoGame';
+import { FamilyFlightSimulator } from '../components/games/flight/FamilyFlightSimulator';
 
-type ActiveGame = 'menu' | 'quiz' | 'puzzle' | 'photo' | 'runner' | 'ludo';
+type ActiveGame = 'menu' | 'quiz' | 'puzzle' | 'photo' | 'runner' | 'ludo' | 'flight';
 
 export default function FamilyGames() {
   const [searchParams, setSearchParams] = useSearchParams();
   const gameParam = searchParams.get('play') as ActiveGame | null;
   const activeGame: ActiveGame = 
-    gameParam === 'quiz' || gameParam === 'puzzle' || gameParam === 'photo' || gameParam === 'runner' || gameParam === 'ludo'
+    gameParam === 'quiz' || gameParam === 'puzzle' || gameParam === 'photo' || gameParam === 'runner' || gameParam === 'ludo' || gameParam === 'flight'
       ? gameParam 
       : 'menu';
 
@@ -310,6 +311,53 @@ export default function FamilyGames() {
                 </div>
               </motion.div>
 
+              {/* Card 6: প্লেন সিমুলেটর (3D Plane Simulator - আত্মীয়ের বাড়ি আকাশপথে ভ্রমণ) */}
+              <motion.div
+                whileHover={{ scale: 1.025, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-gradient-to-br from-[#FAF9F6] to-[#F0FDF4] border-2 border-sky-600/70 rounded-3xl p-5 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group relative overflow-hidden md:col-span-2"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-700 to-blue-800 text-amber-300 flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition-transform">
+                      ✈️
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold bg-sky-500 text-white px-2.5 py-1 rounded-full shadow-xs uppercase tracking-wider">
+                        ৩ডি গুগল ম্যাপ স্টাইল
+                      </span>
+                      <span className="text-[10px] font-bold bg-amber-400 text-stone-950 px-2.5 py-1 rounded-full shadow-xs">
+                        বিমান ও হেলিকপ্টার
+                      </span>
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#1A3636] mb-2 group-hover:text-[#40534C] transition-colors flex items-center gap-2">
+                    <span>প্লেন সিমুলেটর</span>
+                    <span className="text-xs font-mono font-normal text-sky-800 bg-sky-100 px-2 py-0.5 rounded-full">3D Plane & Helicopter</span>
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-[#40534C] font-light leading-relaxed mb-5 max-w-2xl">
+                    বাস্তব উড়োজাহাজ ও হেলিকপ্টার নিয়ে গুগল ম্যাপের মতো গ্রাম, বাড়ি-ঘর ও নদীর ওপর দিয়ে আকাশপথে ভ্রমণ করুন। আপনার পছন্দের যেকোনো আত্মীয়ের বাড়ি সিলেক্ট করে আকাশপথে উড়ে যান এবং তাঁদের বাড়ির পাশের রানওয়ে বা হেলিপ্যাডে নিরাপদে অবতরণ করুন!
+                  </p>
+                </div>
+
+                <div className="pt-3.5 border-t border-[#D6BD98]/40 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-sky-800">
+                    <span>🗺️ আত্মীয়ের বাড়ির রুট</span>
+                    <span>•</span>
+                    <span>🕹️ বাস্তব ককপিট ও ফিজিক্স</span>
+                  </div>
+                  <button
+                    onClick={() => setGame('flight')}
+                    className="inline-flex items-center gap-1.5 bg-[#1A3636] hover:bg-[#40534C] text-white font-bold text-xs px-5 py-2 rounded-full shadow-md group-hover:shadow-lg transition cursor-pointer"
+                  >
+                    <span>উড়ুন</span>
+                    <Play className="w-3 h-3 fill-white" />
+                  </button>
+                </div>
+              </motion.div>
+
             </div>
           </motion.div>
         )}
@@ -359,6 +407,16 @@ export default function FamilyGames() {
         {/* ------------------------------------------------------------- */}
         {activeGame === 'ludo' && (
           <FamilyLudoGame
+            members={members}
+            onBackToHub={() => setGame('menu')}
+          />
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* VIEW 7: GAME 6 - প্লেন সিমুলেটর (3D Flight Simulator) */}
+        {/* ------------------------------------------------------------- */}
+        {activeGame === 'flight' && (
+          <FamilyFlightSimulator
             members={members}
             onBackToHub={() => setGame('menu')}
           />
